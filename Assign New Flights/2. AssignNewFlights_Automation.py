@@ -439,4 +439,4 @@ for aircraft_info in aircraft_List:
             preset = "b"
         
         if hours_before_inspection >= 26:  # Aircraft needs maintenance
-            automation_flights(aircraft_info['Airport'], aircraft_info['Aircraft'], preset, aircraft_info['Aircraft'])
+            automation_flights(aircraft_info['Airport'], aircraft_info['DisplayName'], preset, aircraft_info['Aircraft'])
