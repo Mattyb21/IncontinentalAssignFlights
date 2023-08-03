@@ -254,7 +254,9 @@ def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_
     jobs_take.to_csv('JobsToTake.csv', index=False, mode='a', header=not os.path.exists('JobsToTake.csv'))
     return route, work_order, jobs_take, total_pay, work_order['Mission ID'].tolist()
 
-def automation_flights(starting_icao, aircraftType, preset):
+def automation_flights(starting_icao, aircraftType, preset, aircraftName):
+
+    global minPax0, maxPax0, minPax1 ,maxPax1, minPax2, maxPax2, minCargo, maxCargo, knots, opCost
 
     if aircraftType == 'Airbus A320':
         minPax0 = 155
@@ -329,7 +331,7 @@ def automation_flights(starting_icao, aircraftType, preset):
         route_amount = 28
         hours = 154
 
-    route, work_order, jobs_take, total_pay, selected_mission_ids = plan_route(starting_icao, 1, last_minute, hours, route_amount, max_Hours, playerMixup)
+    route, work_order, jobs_take, total_pay, selected_mission_ids = plan_route(starting_icao, 1, last_minute, hours, route_amount, max_Hours, playerMixup, aircraftName)
 
     if selected_mission_ids:
         remove_selected_missions(selected_mission_ids)
@@ -346,25 +348,33 @@ def automation_flights(starting_icao, aircraftType, preset):
     #input("Press Enter to exit...")
 
 #Running the new queries
+deleteJobsToTake = input('Do you want to delete the jobsToTake file? Type 1 if yes: ')
 
-command = ["python", "1. ImportNewFlights.py"]
+if deleteJobsToTake == "1":
+    os.remove('JobsToTake.csv')
 
-# Run the command and wait for it to finish
-process = subprocess.Popen(command)
-process.wait()
+RunNewQueries = input("Do you want to rerun the query import? Type 1 if yes: ")
 
-# Check the return code of the subprocess
-return_code = process.returncode
-if return_code == 0:
-    print("The other script executed successfully.")
-else:
-    print("Failed")
-#End running queries
+if RunNewQueries == "1":
+    command = ["python", "1. ImportNewFlights.py"]
+    # Run the command and wait for it to finish
+    process = subprocess.Popen(command)
+    process.wait()
+
+    # Check the return code of the subprocess
+    return_code = process.returncode
+    if return_code == 0:
+        print("The other script executed successfully.")
+    else:
+        print("Failed")
+    #End running queries
+
+
 
 StartProcess = input('Ensure that the onAir client is on the Aircraft page and then press ENTER: ')
 
 aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
-aircraft_List = aircraftInOperation['aircraft'].tolist()
+aircraft_List = aircraftInOperation['Aircraft'].tolist()
 
 #Select the max payload box on the aircraft screen
 pyautogui.click(x=1130, y=349)
@@ -378,25 +388,26 @@ while fuckedLoop < 100:
     pyautogui.hotkey('ctrl', 'c')
     pyautogui.sleep(0.1)
 
-    if aircraft_selected == pyperclip.paste().split("\t"):
-        #Probably the last aircraft
-        break
+    if fuckedLoop > 0:
+        if aircraft_selected == pyperclip.paste().split("\t"):
+            #Probably the last aircraft
+            break
 
     aircraft_selected = pyperclip.paste().split("\t")
 
     if aircraft_selected[0] in aircraft_List and aircraft_selected[4] == "Idle": #Checking if eligible
         #Preset D
-        if 52 <= aircraft_selected[10]:
-            preset = "D"
+        if 52 <= float(aircraft_selected[10].split()[0]):
+            preset = "d"
         
-        if 39 <= aircraft_selected[10] < 52:
-            preset = "C"
+        if 39 <= float(aircraft_selected[10].split()[0]) < 52:
+            preset = "c"
 
-        if 26 <= aircraft_selected[10] < 39:
-            preset = "B"
+        if 26 <= float(aircraft_selected[10].split()[0]) < 39:
+            preset = "b"
         
-        if aircraft_selected[10] > 26: #Aircraft needs maintenance
-            automation_flights(aircraft_selected[3], aircraft_selected[1], preset)
+        if float(aircraft_selected[10].split()[0]) > 26: #Aircraft needs maintenance
+            automation_flights(aircraft_selected[3], aircraft_selected[1], preset, aircraft_selected[0])
 
     #Next Aircraft
     pyautogui.press('down')
