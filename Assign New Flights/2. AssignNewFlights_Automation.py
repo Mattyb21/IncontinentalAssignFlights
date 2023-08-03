@@ -425,8 +425,6 @@ if RunNewQueries == "1":
 aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
 aircraft_List = aircraftInOperation['Aircraft'].tolist()
 
-
-
 for aircraft_info in aircraft_List:
     hours_before_inspection = aircraft_info['HoursBefore100HInspection']
     if hours_before_inspection != 'N/A':  # Ensure the data exists
@@ -438,5 +436,5 @@ for aircraft_info in aircraft_List:
         elif 26 <= hours_before_inspection < 39:
             preset = "b"
         
-        if hours_before_inspection >= 26:  # Aircraft needs maintenance
+        if hours_before_inspection >= 26:  # Aircraft doesn't need maintenance
             automation_flights(aircraft_info['Airport'], aircraft_info['DisplayName'], preset, aircraft_info['Aircraft'])
