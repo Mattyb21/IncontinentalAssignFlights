@@ -27,7 +27,6 @@ def player_mixup(missions):
 
     # Filter these missions out
     missions_filtered = missions[~missions['Mission ID'].isin(missions_to_remove)]
-    print(missions_filtered)
     return missions_filtered
 
 def filter_pax(missions, minPax0, maxPax0, minPax1, maxPax1, minPax2, maxPax2, minCargo, maxCargo):
@@ -81,8 +80,6 @@ def count_flights_in_mission(missions, mission_id):
 def find_mission_flights(missions, mission_id, current_icao):
     # Select all flights from the mission with the given mission_id
     mission_flights = missions[missions['Mission ID'] == mission_id]
-    print('All flights in mission:')
-    print(mission_flights[['Mission ID', 'DepartureICAO', 'DestinationICAO']])
 
     # Prepare an empty DataFrame to store the ordered flights
     ordered_mission_flights = pd.DataFrame()
@@ -95,9 +92,6 @@ def find_mission_flights(missions, mission_id, current_icao):
 
         # If there are no more flights departing from current_icao, break the loop
         if available_flights.empty:
-            print('Breaking with this in mission_flights')
-            print('Current ICAO: ' + current_icao)
-            print(mission_flights[['Mission ID', 'DepartureICAO', 'DestinationICAO']])
             break
 
 
@@ -125,13 +119,9 @@ def find_mission_flights(missions, mission_id, current_icao):
 
 def add_flights_from_mission(missions, mission_flights, max_flights, max_Hours):
 
-    global route, work_order
-    print('Starting Addflights')
-
-    
+    global route, work_order    
     # Iterate over each flight in the mission
     for _, flight in mission_flights.iterrows():
-        print('Adding flight: ' + str([flight['DepartureICAO']]) + '->' + str([flight['DestinationICAO']]))
         # Add the current flight to the route
         route = pd.concat([route, flight.to_frame().T], ignore_index=True)
         # Add the current flight to the work order with its details
@@ -149,7 +139,6 @@ def add_flights_from_mission(missions, mission_flights, max_flights, max_Hours):
 
         # Update the current ICAO to the destination of the last added flight
         current_icao = flight['DestinationICAO']
-        print('Set the ICAO to ' + flight['DestinationICAO'])
 
         if current_flights != max_flights:
             dfs(missions, current_icao, max_flights, max_Hours)
@@ -159,7 +148,6 @@ def add_flights_from_mission(missions, mission_flights, max_flights, max_Hours):
 def dfs(missions, current_icao, max_flights, max_Hours):
     global current_flights, hoursWorked, knots
     # If the total number of flights in the route reaches the maximum, stop the recursion
-    print(f"Starting DFS - Current flights: {current_flights}, Maximum flights: {max_flights}")  # Added print
     if current_flights == max_flights:
         return
 
@@ -175,20 +163,16 @@ def dfs(missions, current_icao, max_flights, max_Hours):
         # Retrieve all the flights for the next mission starting from current_icao
         if current_flights != max_flights:
             mission_flights = find_mission_flights(missions, next_mission['Mission ID'], current_icao)
-            print('Selected mission with ' + str(count_flights_in_mission(missions, next_mission['Mission ID'])) + ' - ' + str(next_mission['Mission ID']))
 
         # If adding all flights in this mission would exceed max_flights, skip to next mission
         if current_flights + count_flights_in_mission(missions, next_mission['Mission ID']) > max_flights or hoursWorked + ((get_mission_distance(missions, next_mission['Mission ID']) / knots) + (count_flights_in_mission(missions, next_mission['Mission ID']) * 0.6)) > max_Hours:
             missions = missions[missions['Mission ID'] != next_mission['Mission ID']]
-            print('Too many flights to fit')
             continue
         else:
             current_flights += count_flights_in_mission(missions, next_mission['Mission ID'])
-            print('Adding flights - current flights now: ' + str(current_flights))
             
             # Add the hours for the mission
             hoursWorked += (get_mission_distance(missions, next_mission['Mission ID']) / knots) + (count_flights_in_mission(missions, next_mission['Mission ID']) * 0.6)
-            print('Added hours - total now: ' + str(hoursWorked))
             
             # Add the flights from the mission to the route and update the flights count and current ICAO
             missions, current_icao = add_flights_from_mission(missions, mission_flights, max_flights, max_Hours)
@@ -552,4 +536,5 @@ for aircraft_info in aircraft_List:
         
         if hours_before_inspection >= 26:  # Aircraft doesn't need maintenance
             automation_flights(aircraft_info['Airport'], aircraft_info['DisplayName'], preset, aircraft_info['Aircraft'])
+            print("Route created for " + aircraft_info['Aircraft'])
 aaaaa = input('Press Enter to finish...')
