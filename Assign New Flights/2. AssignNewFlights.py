@@ -46,17 +46,6 @@ def filter_pax(missions, minPax0, maxPax0, minPax1, maxPax1, minPax2, maxPax2, m
     valid_missions = missions.groupby('Mission ID').filter(is_mission_valid).reset_index(drop=True)
     
     return valid_missions
-
-
-# def filter_pax(missions, minPax0, maxPax0, minPax1, maxPax1, minPax2, maxPax2, minCargo, maxCargo):
-    # # Filter out missions if any flight has 'pax' or 'cargo' lower than the respective min value or higher than the respective max value
-    # missions = missions.groupby('Mission ID').filter(
-        # lambda x: (x['PaxClass0'].min() >= minPax0 and x['PaxClass0'].max() <= maxPax0) and
-                  # (x['PaxClass1'].min() >= minPax1 and x['PaxClass1'].max() <= maxPax1) and
-                  # (x['PaxClass2'].min() >= minPax2 and x['PaxClass2'].max() <= maxPax2) and
-                  # (x['Cargo'].min() >= minCargo and x['Cargo'].max() <= maxCargo)
-    # )
-    # return missions
     
 def filter_by_expiration(missions, hours):
     now = datetime.datetime.utcnow()
@@ -110,9 +99,6 @@ def find_mission_flights(missions, mission_id, current_icao):
             break
 
 
-        # Select the first available flight
-        #next_flight = available_flights.iloc[0]
-
         for i in range(len(available_flights)):
             # Select the ith available flight
             potential_next_flight = available_flights.iloc[i]
@@ -141,10 +127,6 @@ def add_flights_from_mission(missions, mission_flights, max_flights, max_Hours):
 
     global route, work_order
     print('Starting Addflights')
-
-    #print('All flights in the mission are:')
-    #print(mission_flights[['Mission ID', 'DepartureICAO', 'DestinationICAO']])
-    #print('---')
 
     
     # Iterate over each flight in the mission
@@ -280,9 +262,6 @@ def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_
 
 starting_icao = input('Enter the Starting ICAO: ').upper()
 human_only = int(input('Enter 1 if all flights are to be completed by AI, otherwise enter 0: '))
-
-#if human_only == 0:
-    #human_only_amount = int(input('How many human only jobs should we select? Enter #: '))
     
 aircraftType = input('Please enter the type of aircraft, i.e. A320, TBM9, B78X: ').upper()
 
@@ -338,7 +317,6 @@ last_minute = 1
 playerMixup = 0
 
 if preset == "":
-    #last_minute = int(input('Enter 1 to disable all Last Minute flights, otherwise enter 0: '))
     route_amount = int(input('Enter the amount of flights to select, e.g. 20: '))
     hours = int(input('Enter the number of hours for the expiration filter, e.g. 96 for 4 days, 120 for 5: '))
     max_Hours = int(input('Enter the maximum hours before the next required maintenance: '))
