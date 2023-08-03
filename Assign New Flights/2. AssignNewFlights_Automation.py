@@ -410,13 +410,13 @@ def queryFBOJobs():
     results = []
     groupedResults = {}
     missions_with_humanonly_true = {}
+    print("Beginning FBO Jobs Query")
 
     for fboId in fboIds:
         endpoint = "https://server1.onair.company/api/v1/fbo/" + str(fboId) + "/jobs"
 
         response = requests.get(endpoint, headers=headers)
         statusCode = response.status_code
-        print("Beginning FBO Jobs Query")
         print(f"Response Status Code for FBO ID {fboId}: {statusCode}")
 
         if statusCode == 200:
@@ -509,8 +509,6 @@ def queryFBOs():
 
         results = headersData + [[fbo['Id'], fbo['Airport']['Name'], fbo['Airport']['ICAO'], fbo['Name']] for fbo in fboList]
 
-        print(f"Extracted Results: {results}")
-
         # Create a DataFrame from the results
         results_df = pd.DataFrame(results[1:], columns=results[0])
 
@@ -554,4 +552,4 @@ for aircraft_info in aircraft_List:
         
         if hours_before_inspection >= 26:  # Aircraft doesn't need maintenance
             automation_flights(aircraft_info['Airport'], aircraft_info['DisplayName'], preset, aircraft_info['Aircraft'])
-print("Finished")
+aaaaa = input('Press Enter to finish...')
