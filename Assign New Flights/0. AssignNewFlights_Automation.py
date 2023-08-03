@@ -537,4 +537,6 @@ for aircraft_info in aircraft_List:
         if hours_before_inspection >= 26:  # Aircraft doesn't need maintenance
             automation_flights(aircraft_info['Airport'], aircraft_info['DisplayName'], preset, aircraft_info['Aircraft'])
             print("Route created for " + aircraft_info['Aircraft'])
+        else:
+            print(aircraft_info['Aircraft'] + " needs maintenance")
 aaaaa = input('Press Enter to finish...')
