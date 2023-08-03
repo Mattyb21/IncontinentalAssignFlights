@@ -374,46 +374,29 @@ if RunNewQueries == "1":
         print("Failed")
     #End running queries
 
-StartProcess = input('Ensure that the onAir client is on the Aircraft page and then press ENTER: ')
-
 aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
 aircraft_List = aircraftInOperation['Aircraft'].tolist()
 
-#Select the max payload box on the aircraft screen
-pyautogui.click(x=1130, y=349)
-pyautogui.sleep(0.1)
+# We need to get from this function a list of aircraft that need a workorder as well as how many hours until their 100h
 
-fuckedLoop = 0
+#Each aircraft in the list we will check to see if there's work orders assigned to it, if there is one we will not select this plane
 
-while fuckedLoop < 100:
+#Content.Aircraft.HoursBefore100HInspection to return
+#Content.Aircraft.Identifier to check if it is in list
+#Content.Name Doesnt contain CREW
 
-    #Copy the row
-    pyautogui.hotkey('ctrl', 'c')
-    pyautogui.sleep(0.1)
+#Function that we feed in the aircraft list, it returns a list of aircraft that are requiring a new job
 
-    if fuckedLoop > 0:
-        if aircraft_selected == pyperclip.paste().split("\t"):
-            #Probably the last aircraft
-            break
+for aircraft in aircraft_List:
 
-    aircraft_selected = pyperclip.paste().split("\t")
+    if 52 <= float(aircraft_selected[10].split()[0]):
+        preset = "d"
+    
+    if 39 <= float(aircraft_selected[10].split()[0]) < 52:
+        preset = "c"
 
-    if aircraft_selected[0] in aircraft_List and aircraft_selected[4] == "Idle": #Checking if eligible
-        #Preset D
-        if 52 <= float(aircraft_selected[10].split()[0]):
-            preset = "d"
-        
-        if 39 <= float(aircraft_selected[10].split()[0]) < 52:
-            preset = "c"
-
-        if 26 <= float(aircraft_selected[10].split()[0]) < 39:
-            preset = "b"
-        
-        if float(aircraft_selected[10].split()[0]) > 26: #Aircraft needs maintenance
+    if 26 <= float(aircraft_selected[10].split()[0]) < 39:
+        preset = "b"
+    
+    if float(aircraft_selected[10].split()[0]) > 26: #Aircraft needs maintenance
             automation_flights(aircraft_selected[3], aircraft_selected[1], preset, aircraft_selected[0])
-
-    #Next Aircraft
-    pyautogui.press('down')
-    pyautogui.sleep(0.1)
-    fuckedLoop += 1
-
