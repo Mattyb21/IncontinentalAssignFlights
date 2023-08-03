@@ -427,16 +427,16 @@ aircraft_List = aircraftInOperation['Aircraft'].tolist()
 
 
 
-for aircraft in aircraft_List:
-
-    if 52 <= float(aircraft_selected[10].split()[0]):
-        preset = "d"
-    
-    if 39 <= float(aircraft_selected[10].split()[0]) < 52:
-        preset = "c"
-
-    if 26 <= float(aircraft_selected[10].split()[0]) < 39:
-        preset = "b"
-    
-    if float(aircraft_selected[10].split()[0]) > 26: #Aircraft needs maintenance
-            automation_flights(aircraft_selected[3], aircraft_selected[1], preset, aircraft_selected[0])
+for aircraft_info in aircraft_List:
+    hours_before_inspection = aircraft_info['HoursBefore100HInspection']
+    if hours_before_inspection != 'N/A':  # Ensure the data exists
+        hours_before_inspection = float(hours_before_inspection)  # Convert to float if necessary
+        if 52 <= hours_before_inspection:
+            preset = "d"
+        elif 39 <= hours_before_inspection < 52:
+            preset = "c"
+        elif 26 <= hours_before_inspection < 39:
+            preset = "b"
+        
+        if hours_before_inspection >= 26:  # Aircraft needs maintenance
+            automation_flights(aircraft_info['Airport'], aircraft_info['Aircraft'], preset, aircraft_info['Aircraft'])
