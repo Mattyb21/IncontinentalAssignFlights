@@ -424,6 +424,7 @@ if RunNewQueries == "1":
 
 aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
 aircraft_List = aircraftInOperation['Aircraft'].tolist()
+aircraft_List = get_workorders(aircraft_List)
 
 for aircraft_info in aircraft_List:
     hours_before_inspection = aircraft_info['HoursBefore100HInspection']
