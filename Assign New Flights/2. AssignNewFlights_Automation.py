@@ -385,7 +385,7 @@ aircraft_List = aircraftInOperation['Aircraft'].tolist()
 #Content.Aircraft.Identifier to check if it is in list
 #Content.Name Doesnt contain CREW
 
-#Function that we feed in the aircraft list, it returns a list of aircraft that are requiring a new job
+#Function that we feed in the aircraft list, it returns a list of aircraft that are requiring a new job and how many hours
 
 for aircraft in aircraft_List:
 
