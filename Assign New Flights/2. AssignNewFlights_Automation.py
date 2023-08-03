@@ -260,7 +260,7 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName):
 
     global minPax0, maxPax0, minPax1 ,maxPax1, minPax2, maxPax2, minCargo, maxCargo, knots, opCost
 
-    if aircraftType == 'A320':
+    if aircraftType == 'Airbus A320':
         minPax0 = 155
         maxPax0 = 186
         minPax1 = 0
@@ -272,7 +272,7 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName):
         knots = 447
         opCost = 69559
         
-    if aircraftType == 'TBM9':
+    if aircraftType == 'TBM 930':
         knots = 330
         minPax0 = 0
         maxPax0 = 0
@@ -284,7 +284,7 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName):
         maxCargo = 0
         opCost = 1395
 
-    if aircraftType == 'B78X':
+    if aircraftType == 'Boeing 787-10  Mk2':
         minPax0 = 154
         maxPax0 = 222
         minPax1 = 42
@@ -366,8 +366,6 @@ def get_workorders(aircraft_list):
     # Remove aircraft in work_order_aircraft_list from aircraft_list
     aircraft_list = [ac for ac in aircraft_list if ac not in work_order_aircraft_list]
 
-    print("39")
-    print(aircraft_list)
     endpoint = f"https://server1.onair.company/api/v1/company/{companyId}/fleet"
 
     try:
@@ -376,17 +374,19 @@ def get_workorders(aircraft_list):
 
         aircraft_api_list = data.get('Content', [])
 
-        # Create a map of aircraft identifiers to current airport and hours before 100 H inspection
+        # Create a map of aircraft identifiers to current airport, hours before 100 H inspection and DisplayName
         aircraft_airport_map = {aal['Identifier']: {
             'Airport': aal.get('CurrentAirport', {}).get('ICAO', 'N/A'),
-            'HoursBefore100HInspection': aal.get('HoursBefore100HInspection', 'N/A')
+            'HoursBefore100HInspection': aal.get('HoursBefore100HInspection', 'N/A'),
+            'DisplayName': aal.get('AircraftType',{}).get('DisplayName', 'N/A')
         } for aal in aircraft_api_list}
 
-        # For each aircraft in the aircraft_list, if it exists in the aircraft_airport_map, attach the current airport and hours before 100 H inspection
+        # For each aircraft in the aircraft_list, if it exists in the aircraft_airport_map, attach the current airport, hours before 100 H inspection, and DisplayName
         aircraft_list_with_airports = [{ 
             'Aircraft': ac, 
             'Airport': aircraft_airport_map.get(ac, {}).get('Airport', 'N/A'), 
-            'HoursBefore100HInspection': aircraft_airport_map.get(ac, {}).get('HoursBefore100HInspection', 'N/A') 
+            'HoursBefore100HInspection': aircraft_airport_map.get(ac, {}).get('HoursBefore100HInspection', 'N/A'),
+            'DisplayName': aircraft_airport_map.get(ac, {}).get('DisplayName', 'N/A') 
         } for ac in aircraft_list]
 
         return aircraft_list_with_airports
