@@ -1,10 +1,6 @@
 import pyautogui
 import pyperclip
-from screeninfo import get_monitors
-monitors = get_monitors()
 
-# Select the desired monitor (replace the index with the appropriate value)
-monitor_index = 0  # Change this to the index of the desired monitor
 
 aircraft = input('Please enter the aircraft type, current supported= A320, TBM9, B78X: ').upper()
 workOrderName = input('Enter work order name (aircraft): ').upper()
