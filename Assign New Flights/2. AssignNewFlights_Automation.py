@@ -260,7 +260,7 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName):
 
     global minPax0, maxPax0, minPax1 ,maxPax1, minPax2, maxPax2, minCargo, maxCargo, knots, opCost
 
-    if aircraftType == 'Airbus A320':
+    if aircraftType == 'A320':
         minPax0 = 155
         maxPax0 = 186
         minPax1 = 0
@@ -272,7 +272,7 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName):
         knots = 447
         opCost = 69559
         
-    if aircraftType == 'TBM 930':
+    if aircraftType == 'TBM9':
         knots = 330
         minPax0 = 0
         maxPax0 = 0
@@ -284,7 +284,7 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName):
         maxCargo = 0
         opCost = 1395
 
-    if aircraftType == 'Boeing 787-10  Mk2':
+    if aircraftType == 'B78X':
         minPax0 = 154
         maxPax0 = 222
         minPax1 = 42
@@ -338,21 +338,9 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName):
     if selected_mission_ids:
         remove_selected_missions(selected_mission_ids)
 
-    #print(route)
-    #print(work_order)
-    #print(jobs_take)
-    #total_payStr = str('{:,}'.format(round(total_pay)))
-    #totalProfit = total_pay - (hoursWorked * opCost)
-    #totalProfitStr = str('{:,}'.format(round(totalProfit)))
-    #print('Total pay for package: $' + total_payStr)
-    #print('Total expetected profit: $' + totalProfitStr)
-    #print('Hours worked: ' + str(hoursWorked))
-    #input("Press Enter to exit...")
-
-def get_workorders(aircraft_list)
+def get_workorders(aircraft_list):
     companyId = "c1069b00-adf0-4f00-b744-4287071e5484"
     endpoint = f"https://server1.onair.company/api/v1/company/{companyId}/workorders"
-
     apiKey = "8e62f5f0-b026-4301-a8d8-122a2d34bd4e"
     headers = {
         "Content-Type": "application/json",
@@ -366,19 +354,42 @@ def get_workorders(aircraft_list)
 
         work_order_list = data.get('Content', [])
 
-        # Prepare the table headers
-        headersData = [["Aircraft", "HoursBefore100", "WorkOrderName"]]
+        # Filter work orders that contain "CREW" in the aircraft identifier
+        work_order_list = [wo for wo in work_order_list if 'CREW' not in wo['Name']]
 
-        results = headersData + [[wo['Aircraft']['HoursBefore100HInspection'], wo['Aircraft']['Identifier'], wo['Name']] for wo in work_order_list]
+        # Create a list of identifiers of aircraft in work orders
+        work_order_aircraft_list = [wo['Aircraft']['Identifier'] for wo in work_order_list]
+        
+    except Exception as error:
+        print(f"API Request Error: {error}")
 
-        print(f"Extracted Results: {results}")
+    # Remove aircraft in work_order_aircraft_list from aircraft_list
+    aircraft_list = [ac for ac in aircraft_list if ac not in work_order_aircraft_list]
 
-        # Create a DataFrame from the results
-        results_df = pd.DataFrame(results[1:], columns=results[0])
+    print("39")
+    print(aircraft_list)
+    endpoint = f"https://server1.onair.company/api/v1/company/{companyId}/fleet"
 
-        # Write the DataFrame to a CSV file
-        results_df.to_csv('Workorders.csv', index=False)
+    try:
+        response = requests.get(endpoint, headers=headers)
+        data = json.loads(response.text)
 
+        aircraft_api_list = data.get('Content', [])
+
+        # Create a map of aircraft identifiers to current airport and hours before 100 H inspection
+        aircraft_airport_map = {aal['Identifier']: {
+            'Airport': aal.get('CurrentAirport', {}).get('ICAO', 'N/A'),
+            'HoursBefore100HInspection': aal.get('HoursBefore100HInspection', 'N/A')
+        } for aal in aircraft_api_list}
+
+        # For each aircraft in the aircraft_list, if it exists in the aircraft_airport_map, attach the current airport and hours before 100 H inspection
+        aircraft_list_with_airports = [{ 
+            'Aircraft': ac, 
+            'Airport': aircraft_airport_map.get(ac, {}).get('Airport', 'N/A'), 
+            'HoursBefore100HInspection': aircraft_airport_map.get(ac, {}).get('HoursBefore100HInspection', 'N/A') 
+        } for ac in aircraft_list]
+
+        return aircraft_list_with_airports
 
     except Exception as error:
         print(f"API Request Error: {error}")
@@ -414,15 +425,7 @@ if RunNewQueries == "1":
 aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
 aircraft_List = aircraftInOperation['Aircraft'].tolist()
 
-# We need to get from this function a list of aircraft that need a workorder as well as how many hours until their 100h
 
-#Each aircraft in the list we will check to see if there's work orders assigned to it, if there is one we will not select this plane
-
-#Content.Aircraft.HoursBefore100HInspection to return
-#Content.Aircraft.Identifier to check if it is in list
-#Content.Name Doesnt contain CREW
-
-#Function that we feed in the aircraft list, it returns a list of aircraft that are requiring a new job and how many hours
 
 for aircraft in aircraft_List:
 

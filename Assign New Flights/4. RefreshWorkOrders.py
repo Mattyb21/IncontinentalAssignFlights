@@ -1,36 +1,71 @@
 import pandas as pd
+import datetime
+import random
+import subprocess
+import os
+import pyautogui
+import pyperclip
 import requests
 import json
 
-companyId = "c1069b00-adf0-4f00-b744-4287071e5484"
-endpoint = f"https://server1.onair.company/api/v1/company/{companyId}/workorders"
+def get_workorders(aircraft_list):
+    companyId = "c1069b00-adf0-4f00-b744-4287071e5484"
+    endpoint = f"https://server1.onair.company/api/v1/company/{companyId}/workorders"
+    apiKey = "8e62f5f0-b026-4301-a8d8-122a2d34bd4e"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "oa-apikey": apiKey
+    }
 
-apiKey = "8e62f5f0-b026-4301-a8d8-122a2d34bd4e"
-headers = {
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-    "oa-apikey": apiKey
-}
+    try:
+        response = requests.get(endpoint, headers=headers)
+        data = json.loads(response.text)
 
-try:
-    response = requests.get(endpoint, headers=headers)
-    data = json.loads(response.text)
+        work_order_list = data.get('Content', [])
 
-    work_order_list = data.get('Content', [])
+        # Filter work orders that contain "CREW" in the aircraft identifier
+        work_order_list = [wo for wo in work_order_list if 'CREW' not in wo['Name']]
 
-    # Prepare the table headers
-    headersData = [["Aircraft", "HoursBefore100", "WorkOrderName"]]
+        # Create a list of identifiers of aircraft in work orders
+        work_order_aircraft_list = [wo['Aircraft']['Identifier'] for wo in work_order_list]
+        
+    except Exception as error:
+        print(f"API Request Error: {error}")
 
-    results = headersData + [[wo['Aircraft']['HoursBefore100HInspection'], wo['Aircraft']['Identifier'], wo['Name']] for wo in work_order_list]
+    # Remove aircraft in work_order_aircraft_list from aircraft_list
+    aircraft_list = [ac for ac in aircraft_list if ac not in work_order_aircraft_list]
 
-    print(f"Extracted Results: {results}")
+    print("39")
+    print(aircraft_list)
+    endpoint = f"https://server1.onair.company/api/v1/company/{companyId}/fleet"
 
-    # Create a DataFrame from the results
-    results_df = pd.DataFrame(results[1:], columns=results[0])
+    try:
+        response = requests.get(endpoint, headers=headers)
+        data = json.loads(response.text)
 
-    # Write the DataFrame to a CSV file
-    results_df.to_csv('Workorders.csv', index=False)
+        aircraft_api_list = data.get('Content', [])
+
+        # Create a map of aircraft identifiers to current airport and hours before 100 H inspection
+        aircraft_airport_map = {aal['Identifier']: {
+            'Airport': aal.get('CurrentAirport', {}).get('ICAO', 'N/A'),
+            'HoursBefore100HInspection': aal.get('HoursBefore100HInspection', 'N/A')
+        } for aal in aircraft_api_list}
+
+        # For each aircraft in the aircraft_list, if it exists in the aircraft_airport_map, attach the current airport and hours before 100 H inspection
+        aircraft_list_with_airports = [{ 
+            'Aircraft': ac, 
+            'Airport': aircraft_airport_map.get(ac, {}).get('Airport', 'N/A'), 
+            'HoursBefore100HInspection': aircraft_airport_map.get(ac, {}).get('HoursBefore100HInspection', 'N/A') 
+        } for ac in aircraft_list]
+
+        return aircraft_list_with_airports
+
+    except Exception as error:
+        print(f"API Request Error: {error}")
 
 
-except Exception as error:
-    print(f"API Request Error: {error}")
+aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
+aircraft_list = aircraftInOperation['Aircraft'].tolist()
+
+aircraft_list = get_workorders(aircraft_list)
