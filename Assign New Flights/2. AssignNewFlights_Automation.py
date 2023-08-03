@@ -205,8 +205,6 @@ def remove_selected_missions(selected_mission_ids):
     # Resave the updated DataFrame back to flights.csv
     missions.to_csv('flights.csv', index=False)
 
-
-
 def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_Hours, playerMixup, workOrderName):
     missions = pd.read_csv('flights.csv')
     fbos = pd.read_csv('FBOs.csv')
@@ -407,10 +405,6 @@ while fuckedLoop < 100:
     pyautogui.press('down')
     pyautogui.sleep(0.1)
     fuckedLoop += 1
-
-
-
-
 
 #steps
 #import aircraft data (in operation)
