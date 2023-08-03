@@ -328,9 +328,6 @@ def automation_flights(starting_icao, aircraftType, preset):
     if preset == "g":
         route_amount = 28
         hours = 154
-        max_Hours = 92
-            print("The other script encountered an error. Return code:", return_code)
-
 
     route, work_order, jobs_take, total_pay, selected_mission_ids = plan_route(starting_icao, 1, last_minute, hours, route_amount, max_Hours, playerMixup)
 
@@ -361,10 +358,10 @@ return_code = process.returncode
 if return_code == 0:
     print("The other script executed successfully.")
 else:
-
+    print("Failed")
 #End running queries
 
-input('Ensure that the onAir client is on the Aircraft page and then press ENTER: ')
+StartProcess = input('Ensure that the onAir client is on the Aircraft page and then press ENTER: ')
 
 aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
 aircraft_List = aircraftInOperation['aircraft'].tolist()
