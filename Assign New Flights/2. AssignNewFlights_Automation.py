@@ -353,6 +353,11 @@ deleteJobsToTake = input('Do you want to delete the jobsToTake file? Type 1 if y
 if deleteJobsToTake == "1":
     os.remove('JobsToTake.csv')
 
+    file_list = os.listdir()
+    for file_name in file_list:
+        if 'workorder_' in file_name:
+            os.remove(file_name)
+
 RunNewQueries = input("Do you want to rerun the query import? Type 1 if yes: ")
 
 if RunNewQueries == "1":
@@ -368,8 +373,6 @@ if RunNewQueries == "1":
     else:
         print("Failed")
     #End running queries
-
-
 
 StartProcess = input('Ensure that the onAir client is on the Aircraft page and then press ENTER: ')
 
@@ -414,7 +417,3 @@ while fuckedLoop < 100:
     pyautogui.sleep(0.1)
     fuckedLoop += 1
 
-#steps
-#import aircraft data (in operation)
-#check list for idle aircraft - is rego in list, is status idle
-#grab location, 100h in, aircraft rego
