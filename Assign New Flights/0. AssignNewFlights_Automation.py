@@ -268,7 +268,7 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName):
         maxCargo = 0
         opCost = 1395
 
-    if aircraftType == 'Boeing 787-10  Mk2':
+    if aircraftType == 'Boeing 787-10':
         minPax0 = 154
         maxPax0 = 222
         minPax1 = 42
@@ -505,7 +505,7 @@ def queryFBOs():
 #Running the new queries
 deleteJobsToTake = input('Do you want to delete the jobsToTake file? Type 1 if yes: ')
 
-if deleteJobsToTake == "1":
+if deleteJobsToTake == "1" and os.path.exists('JobsToTake.csv'):
     os.remove('JobsToTake.csv')
 
     file_list = os.listdir()
