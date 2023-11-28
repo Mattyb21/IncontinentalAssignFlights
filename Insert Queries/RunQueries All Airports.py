@@ -1,6 +1,5 @@
 import pyautogui
 import pyperclip
-from screeninfo import get_monitors
 import pandas as pd
 import shutil
 import csv

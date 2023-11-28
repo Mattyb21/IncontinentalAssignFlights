@@ -10,9 +10,13 @@ rest_crew = int(input('Would you like to automatically rest the crew? 1 for YES,
 # Ensure that the screen is ready
 screen_ready = input('Ensure that you are on the workorder screen and that the correct aircraft has been selected in the top left as well as the correct pilot / copilot and attendants. If this is correct hit enter')
 
+#Sleep to get out of VNC
+pyautogui.sleep(5)
+
 pyautogui.doubleClick(x=200, y=282)
 pyautogui.sleep(0.5)
 pyautogui.hotkey('ctrl', 'c')
+pyautogui.sleep(0.5)
 
 if pyperclip.paste() != 'Work ':
     print('Workorder not correctly set')
@@ -53,7 +57,7 @@ with open('workorder_' + workOrderName + '.csv', 'r') as file:
         pyautogui.sleep(0.2)
         
         pyautogui.hotkey('ctrl', 'c')
-        pyautogui.sleep(0.2)
+        pyautogui.sleep(1)
         
         currentPayload = pyperclip.paste().split("\t")
         pyautogui.sleep(0.2)
@@ -94,8 +98,9 @@ with open('workorder_' + workOrderName + '.csv', 'r') as file:
             #print(currentPayload[1] + " - " + str(len(currentPayload[11])) + " - " + currentPayload[12] + " - " + str(len(currentPayload[13])) + " - " + currentPayload[3][:2] + currentPayload[3][-1:] + " - " + currentPayload[3][:2] + " - " + currentPayload[3][-1:])
             
             #Check to see if the current record matches
-            if currentPayload[1] == destination and len(currentPayload[11]) == 0 and currentPayload[12] != 'True' and len(currentPayload[13]) < 4 and descript == currentPayload[3][:2] + currentPayload[3][-1:] or currentPayload[1] == destination and len(currentPayload[11]) == 0 and currentPayload[12] != 'True' and len(currentPayload[13]) < 4 and descript == currentPayload[3][:2] and currentPayload[3][-1:] != "n":
-                #Load the job
+            if currentPayload[1] == destination and len(currentPayload[11]) == 0 and currentPayload[12] == 'False' and len(currentPayload[13]) < 4 and descript == currentPayload[3][:2] + currentPayload[3][-1:] or currentPayload[1] == destination and len(currentPayload[11]) == 0 and currentPayload[12] == 'False' and len(currentPayload[13]) < 4 and descript == currentPayload[3][:2] and currentPayload[3][-1:] != "n":
+		#print('currentPayload[12] = ' + str(currentPayload[12]))
+		
                 if "Eco" in currentPayload[3] and ecoPaxLoaded == 0:
                     pyautogui.press('tab')
                     pyautogui.sleep(0.05)
@@ -127,14 +132,13 @@ with open('workorder_' + workOrderName + '.csv', 'r') as file:
 
             #currentPayload[1] != destination or len(currentPayload[11]) > 0 or currentPayload[12] != 'False' or len(currentPayload[13]) > 2:
             pyautogui.press('down')
-            pyautogui.sleep(0.4)
+            pyautogui.sleep(1)
             
             #Copy Next Row
             pyautogui.hotkey('ctrl', 'c')
-            pyautogui.sleep(0.1)
+            pyautogui.sleep(1)
 
-            if pyperclip.paste().split("\t") == currentPayload:
-                #There's probably no more jobs, time to move to the next job
+            if pyperclip.paste().split("\t") == currentPayload: #There's probably no more jobs, time to move to the next job
                 break
 
             currentPayload = pyperclip.paste().split("\t")
@@ -144,7 +148,14 @@ with open('workorder_' + workOrderName + '.csv', 'r') as file:
                 exit()           
 
         #We should have loaded all the jobs now
-        fuckedLoop = 0        
+        fuckedLoop = 0
+        if ecoPaxLoaded == 0:
+            aaaaa = 1
+            print('Good chance job is fucked, no eco pax loaded')
+                
+                
+
+                    
         ecoPaxLoaded = 0
         busPaxLoaded = 0
         firstPaxLoaded = 0
@@ -208,7 +219,7 @@ with open('workorder_' + workOrderName + '.csv', 'r') as file:
 
 #Select Delete Leg
 pyautogui.click(x=263, y=466)
-pyautogui.sleep(0.2)
+pyautogui.sleep(0.5)
 
 #Select Yes
 pyautogui.click(x=1874, y=1196)

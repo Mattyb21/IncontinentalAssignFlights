@@ -3,6 +3,8 @@ import pyperclip
 import pandas as pd
 
 a = input('Please ensure you have gone to pending jobs and selected the FBO Queries tab. ALSO SORT BY PAY. Press enter once you have ...')
+pyautogui.sleep(5)
+
 
 
 # Load the JobsToTake.csv file into a DataFrame
@@ -24,18 +26,19 @@ for index, row in fbos_df.iterrows():
     # Check if the value exists in the first field (field 0) of the JobsToTake.csv file
     if FBOs in jobs_FBOID:
         #Select the FBO
+        pyautogui.sleep(1)
         pyautogui.press('enter')
 
         #Wait ages for it to load
-        pyautogui.sleep(20)
+        pyautogui.sleep(25)
 
         #Sel cargo field
         pyautogui.click(x=662, y=464)
-        pyautogui.sleep(0.2)
+        pyautogui.sleep(1)
 
         #Copy the row
         pyautogui.hotkey('ctrl', 'c')
-        pyautogui.sleep(0.2)
+        pyautogui.sleep(1)
 
         current_job = pyperclip.paste().split("\t")
 
@@ -48,26 +51,26 @@ for index, row in fbos_df.iterrows():
                     #We do the action here to take the job
                     #Headed left to the take button
                     pyautogui.press('left')
-                    pyautogui.sleep(0.1)
+                    pyautogui.sleep(0.5)
 
                     pyautogui.press('left')
-                    pyautogui.sleep(0.1)
+                    pyautogui.sleep(0.5)
 
                     pyautogui.press('left')
-                    pyautogui.sleep(0.1)
+                    pyautogui.sleep(0.5)
 
                     pyautogui.press('left')
-                    pyautogui.sleep(0.1)
+                    pyautogui.sleep(0.5)
 
                     pyautogui.press('left')
-                    pyautogui.sleep(0.1)
+                    pyautogui.sleep(0.5)
 
                     pyautogui.press('left')
-                    pyautogui.sleep(0.1)
+                    pyautogui.sleep(0.5)
 
                     #Tab to highlight button
                     pyautogui.press('tab')
-                    pyautogui.sleep(0.1)
+                    pyautogui.sleep(0.5)
 
                     #Enter to take job
                     pyautogui.press('enter')
@@ -76,7 +79,7 @@ for index, row in fbos_df.iterrows():
 
                     #click back on cargo1
                     pyautogui.click(x=662, y=464)
-                    pyautogui.sleep(0.2)
+                    pyautogui.sleep(0.5)
 
                     break
             
@@ -86,13 +89,13 @@ for index, row in fbos_df.iterrows():
 
             #Copy the row
             pyautogui.hotkey('ctrl', 'c')
-            pyautogui.sleep(0.2)
+            pyautogui.sleep(0.5)
 
             if pyperclip.paste().split("\t") == current_job:
                 #There's probably no more jobs, time to move to the next job
                 #selecting FBO box
                 pyautogui.click(x=243, y=300)
-                pyautogui.sleep(0.2)
+                pyautogui.sleep(0.5)
                 break
 
             current_job = pyperclip.paste().split("\t")
@@ -100,7 +103,7 @@ for index, row in fbos_df.iterrows():
     
     #Next FBO
     pyautogui.press('down')
-    pyautogui.sleep(0.4)
+    pyautogui.sleep(0.5)
 
-print('Completed')
+a = input('Completed')
 
