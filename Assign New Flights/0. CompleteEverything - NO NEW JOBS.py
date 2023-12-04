@@ -1076,7 +1076,7 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
     #Select Activate
     pyautogui.click(x=3465, y=228)
     pyautogui.sleep(10)
-
+   
 def workOrder_controller():
     #We will make all the workorders from here, because it's stupid how hard it is to make :(
     
@@ -1173,17 +1173,20 @@ def RefuelFBOs():
     #pyautogui.press('enter')
     #pyautogui.sleep(1)
 
+#********* this is the script that will just go and make workdorders and not do anything else ***********
+
+
 pyautogui.PAUSE = 0
 LaunchandPrepOnair()
 print("Onair Prepped and Launched")
 
-if os.path.exists('JobsToTake.csv'):
-    os.remove('JobsToTake.csv')
+# if os.path.exists('JobsToTake.csv'):
+    # os.remove('JobsToTake.csv')
 
-    file_list = os.listdir()
-    for file_name in file_list:
-        if 'workorder_' in file_name:
-            os.remove(file_name)
+    # file_list = os.listdir()
+    # for file_name in file_list:
+        # if 'workorder_' in file_name:
+            # os.remove(file_name)
 
 
 aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
@@ -1191,50 +1194,56 @@ aircraft_List = aircraftInOperation['Aircraft'].tolist()
 aircraft_List = get_workorders(aircraft_List)
 
 
-aircraftmaintenance(aircraft_List)
-print("Aircraft Maintenance Complete")
+#aircraftmaintenance(aircraft_List)
+#print("Aircraft Maintenance Complete")
 
 
 #Query FBO's and Jobs
-queryFBOs()
-print("FBO Query Complete")
-queryFBOJobs()
-print("FBO Job Query Complete")
+#queryFBOs()
+#print("FBO Query Complete")
+#queryFBOJobs()
+#print("FBO Job Query Complete")
 
 
-for aircraft_info in aircraft_List:
-    hours_before_inspection = aircraft_info['HoursBefore100HInspection']
-    if hours_before_inspection != 'N/A':  # Ensure the data exists
-        hours_before_inspection = float(hours_before_inspection)  # Convert to float if necessary
-        if 52 <= hours_before_inspection:
-            preset = "d"
-        elif 39 <= hours_before_inspection < 52:
-            preset = "c"
-        elif 35 <= hours_before_inspection < 39:
-            preset = "b"
+# for aircraft_info in aircraft_List:
+    # hours_before_inspection = aircraft_info['HoursBefore100HInspection']
+    # if hours_before_inspection != 'N/A':  # Ensure the data exists
+        # hours_before_inspection = float(hours_before_inspection)  # Convert to float if necessary
+        # if 52 <= hours_before_inspection:
+            # preset = "d"
+        # elif 39 <= hours_before_inspection < 52:
+            # preset = "c"
+        # elif 35 <= hours_before_inspection < 39:
+            # preset = "b"
         
-        if hours_before_inspection >= 35:  # Aircraft doesn't need maintenance
-            automation_flights(aircraft_info['Airport'], aircraft_info['DisplayName'], preset, aircraft_info['Aircraft'])
-            print("Route created for " + aircraft_info['Aircraft'])
-        else:
-            print(aircraft_info['Aircraft'] + " in maintenance")
+        # if hours_before_inspection >= 35:  # Aircraft doesn't need maintenance
+            # automation_flights(aircraft_info['Airport'], aircraft_info['DisplayName'], preset, aircraft_info['Aircraft'])
+            # print("Route created for " + aircraft_info['Aircraft'])
+        # else:
+            # print(aircraft_info['Aircraft'] + " in maintenance")
 
 
 file_name_jobs = 'JobsToTake.csv'
+time.sleep(1)
+queryFleet()
+time.sleep(1)
+workOrder_controller()
 
 time.sleep(1)
-if os.path.exists(file_name_jobs):
-    take_queries()
-    time.sleep(1)
-    #Click to get rid of the dialog box
-    pyautogui.click(x=1394, y=20)
+
+
+# if os.path.exists(file_name_jobs):
+    # take_queries()
+    # time.sleep(1)
+    # #Click to get rid of the dialog box
+    # pyautogui.click(x=1394, y=20)
     
 
-if os.path.exists(file_name_jobs):
-    time.sleep(1)
-    queryFleet()
-    time.sleep(1)
-    workOrder_controller()
+# if os.path.exists(file_name_jobs):
+    # time.sleep(1)
+    # queryFleet()
+    # time.sleep(1)
+    # workOrder_controller()
 
 RefuelFBOs()
 

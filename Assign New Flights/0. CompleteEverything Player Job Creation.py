@@ -127,9 +127,9 @@ def add_flights_from_mission(missions, mission_flights, max_flights, max_Hours):
         # Add the current flight to the route
         route = pd.concat([route, flight.to_frame().T], ignore_index=True)
         # Add the current flight to the work order with its details
-		
+        
         work_order = work_order.dropna(how='all', axis=1)
-		
+        
         work_order = pd.concat([work_order, pd.DataFrame({
             'Order': [len(route)],
             'Mission ID': [flight['Mission ID']],
@@ -245,7 +245,7 @@ def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_
     jobs_take.to_csv('JobsToTake.csv', index=False, mode='a', header=not os.path.exists('JobsToTake.csv'))
     return route, work_order, jobs_take, total_pay, work_order['Mission ID'].tolist()
 
-def automation_flights(starting_icao, aircraftType, preset, aircraftName):
+def automation_flights(starting_icao, aircraftType, preset, aircraftName, playerMixup):
 
     global minPax0, maxPax0, minPax1 ,maxPax1, minPax2, maxPax2, minCargo, maxCargo, knots, opCost
 
@@ -280,18 +280,18 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName):
         maxPax1 = 62
         minPax2 = 21
         maxPax2 = 31
-        minCargo = 20000
+        minCargo = 0
         maxCargo = 30000
         knots = 488
         opCost = 236034
 
     last_minute = 1 #disables last minute running
-    playerMixup = 0
+    playerMixup = playerMixup
     route_amount = preset
     hours = 75
     max_Hours = 100
 
-    route, work_order, jobs_take, total_pay, selected_mission_ids = plan_route(starting_icao, 1, last_minute, hours, route_amount, max_Hours, playerMixup, aircraftName)
+    route, work_order, jobs_take, total_pay, selected_mission_ids = plan_route(starting_icao, 0, last_minute, hours, route_amount, max_Hours, playerMixup, aircraftName)
 
     if selected_mission_ids:
         remove_selected_missions(selected_mission_ids)
@@ -477,572 +477,601 @@ def queryFBOs():
         print(f"API Request Error: {error}")
 
 def aircraftmaintenance(aircraft_List):
-	#We will insert the aircraft maintenance part here
+    #We will insert the aircraft maintenance part here
 
-	time.sleep(5)
-	#Sort by 100h
-	pyautogui.click(x=1722, y=303)
-	time.sleep(1)
+    time.sleep(5)
+    #Sort by 100h
+    pyautogui.click(x=1722, y=303)
+    time.sleep(1)
 
-	#Click first row
-	pyautogui.click(x=1722, y=347)
-	time.sleep(1)
+    #Click first row
+    pyautogui.click(x=1722, y=347)
+    time.sleep(1)
 
-	#Copy data from first row
-	pyautogui.hotkey('ctrl', 'c')
-	time.sleep(1)
-	ac_maint_line = pyperclip.paste().split("\t")
-	time.sleep(1)
-	maint_variable = 347
-	#40 pixels per row
+    #Copy data from first row
+    pyautogui.hotkey('ctrl', 'c')
+    time.sleep(1)
+    ac_maint_line = pyperclip.paste().split("\t")
+    time.sleep(1)
+    maint_variable = 347
+    #40 pixels per row
 
-	while True:
+    while True:
 
-		if 'Needed' not in ac_maint_line[3]:
-			if float(ac_maint_line[10].split()[0]) > 30:
-				break
+        if 'Needed' not in ac_maint_line[3]:
+            if float(ac_maint_line[10].split()[0]) > 30:
+                break
 
-		if ac_maint_line[0] in aircraft_List and 'Needed' not in ac_maint_line[3]:
-			#Do maintenance
-			#Select Manage
-			pyautogui.click(x=720, y=maint_variable)
-			time.sleep(1)
-			
-			#Select Workshop
-			pyautogui.click(x=1050, y=maint_variable + 116)
-			time.sleep(15)
-			
-			#Select 100h
-			pyautogui.click(x=662, y=843)
-			time.sleep(1)
-			
-			#Repair Airframe
-			pyautogui.click(x=718, y=972)
-			time.sleep(1)
-			
-			#Engine 1
-			pyautogui.click(x=1094, y=1045)
-			time.sleep(1)
-			
-			#engine 2
-			pyautogui.click(x=1094, y=1078)
-			time.sleep(1)
-			
-			#Airframe Cond
-			pyautogui.click(x=1020, y=967)
-			time.sleep(1)
-			pyautogui.write('99')
-			time.sleep(1)
-			
-			#e1 cond
-			pyautogui.click(x=726, y=1045)
-			time.sleep(1)
-			pyautogui.write('99')
-			time.sleep(1)
-			
-			#e2 cond
-			pyautogui.click(x=726, y=1078)
-			time.sleep(1)
-			pyautogui.write('99')
-			time.sleep(1)
-			
-			#Dropdown Box for FBO
-			pyautogui.click(x=2790, y=326)
-			time.sleep(1)
-			
-			#YMML - Only one FBO
-			if ac_maint_line[3] == "YMML":
-				pyautogui.click(x=2790, y=360)
-				time.sleep(1)
-			
-			if ac_maint_line[3] == "YSSY":
-				pyautogui.click(x=2790, y=440)
-				time.sleep(1)
-			
-			if ac_maint_line[3] == "YBBN":
-				pyautogui.click(x=2790, y=440)
-				time.sleep(1)
-			
-			#Get quote
-			pyautogui.click(x=3204, y=323)
-			time.sleep(2)
+        if ac_maint_line[0] in aircraft_List and 'Needed' not in ac_maint_line[3]:
+            #Do maintenance
+            #Select Manage
+            pyautogui.click(x=720, y=maint_variable)
+            time.sleep(1)
+            
+            #Select Workshop
+            pyautogui.click(x=1050, y=maint_variable + 116)
+            time.sleep(15)
+            
+            #Select 100h
+            pyautogui.click(x=662, y=843)
+            time.sleep(1)
+            
+            #Repair Airframe
+            pyautogui.click(x=718, y=972)
+            time.sleep(1)
+            
+            #Engine 1
+            pyautogui.click(x=1094, y=1045)
+            time.sleep(1)
+            
+            #engine 2
+            pyautogui.click(x=1094, y=1078)
+            time.sleep(1)
+            
+            #Airframe Cond
+            pyautogui.click(x=1020, y=967)
+            time.sleep(1)
+            pyautogui.write('99')
+            time.sleep(1)
+            
+            #e1 cond
+            pyautogui.click(x=726, y=1045)
+            time.sleep(1)
+            pyautogui.write('99')
+            time.sleep(1)
+            
+            #e2 cond
+            pyautogui.click(x=726, y=1078)
+            time.sleep(1)
+            pyautogui.write('99')
+            time.sleep(1)
+            
+            #Dropdown Box for FBO
+            pyautogui.click(x=2790, y=326)
+            time.sleep(1)
+            
+            #YMML - Only one FBO
+            if ac_maint_line[3] == "YMML":
+                pyautogui.click(x=2790, y=360)
+                time.sleep(1)
+            
+            if ac_maint_line[3] == "YSSY":
+                pyautogui.click(x=2790, y=440)
+                time.sleep(1)
+            
+            if ac_maint_line[3] == "YBBN":
+                pyautogui.click(x=2790, y=440)
+                time.sleep(1)
+            
+            #Get quote
+            pyautogui.click(x=3204, y=323)
+            time.sleep(2)
 
-			#pay and start
-			pyautogui.click(x=3124, y=611)
-			time.sleep(10)
-			
-			#Sort by 100h
-			pyautogui.click(x=1722, y=303)
-			time.sleep(1)
+            #pay and start
+            pyautogui.click(x=3124, y=611)
+            time.sleep(10)
+            
+            #Sort by 100h
+            pyautogui.click(x=1722, y=303)
+            time.sleep(1)
 
-		maint_variable += 40
+        maint_variable += 40
 
-		#Click on next row
-		pyautogui.click(x=1722, y=maint_variable)
-		time.sleep(1)
-		
-		pyautogui.hotkey('ctrl', 'c')
-		time.sleep(1)
-		ac_maint_line = pyperclip.paste().split("\t")
-		time.sleep(1)
-	
+        #Click on next row
+        pyautogui.click(x=1722, y=maint_variable)
+        time.sleep(1)
+        
+        pyautogui.hotkey('ctrl', 'c')
+        time.sleep(1)
+        ac_maint_line = pyperclip.paste().split("\t")
+        time.sleep(1)
+    
 def LaunchandPrepOnair():
 
-	#We will insert launch info here:
+    #We will insert launch info here:
 
-	# Launch the application
-	onair_appref_ms_path = r'C:\Users\Server\Desktop\OnAir Company.appref-ms'
-	subprocess.Popen(f'cmd /c start "" "{onair_appref_ms_path}"', shell=True)
+    # Launch the application
+    onair_appref_ms_path = r'C:\Users\Server\Desktop\OnAir Company.appref-ms'
+    subprocess.Popen(f'cmd /c start "" "{onair_appref_ms_path}"', shell=True)
 
-	# Wait for a moment to allow the application to start
-	time.sleep(5)
+    # Wait for a moment to allow the application to start
+    time.sleep(5)
 
-	# Try to find the window
-	try:
-		# You need to know the title of the window to find it
-		window_title = "OnAir Airline Manager" 
-		onair_window = gw.getWindowsWithTitle(window_title)[0]  # Get the first window with the title
+    # Try to find the window
+    try:
+        # You need to know the title of the window to find it
+        window_title = "OnAir Airline Manager" 
+        onair_window = gw.getWindowsWithTitle(window_title)[0]  # Get the first window with the title
 
-		if onair_window:
-			# Maximize the window
-			onair_window.maximize()
-			print("Window maximized.")
-		else:
-			print("Window not found.")
-	except Exception as e:
-		print(f"An error occurred: {e}")
+        if onair_window:
+            # Maximize the window
+            onair_window.maximize()
+            print("Window maximized.")
+        else:
+            print("Window not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
-	time.sleep(20)
+    time.sleep(20)
 
 
-	#Click Resume
-	pyautogui.click(x=2231, y=1573)
-	time.sleep(25)
+    #Click Resume
+    pyautogui.click(x=2231, y=1573)
+    time.sleep(25)
 
-	#Click VA Ops
-	pyautogui.click(x=627, y=55)
-	time.sleep(1)
+    #Click VA Ops
+    pyautogui.click(x=627, y=55)
+    time.sleep(1)
 
-	#Click VA
-	pyautogui.click(x=627, y=175)
-	time.sleep(50)
-	#Real wake up call that onair is slow as fuck
+    #Click VA
+    pyautogui.click(x=627, y=175)
+    time.sleep(50)
+    #Real wake up call that onair is slow as fuck
 
-	#Click Aircaft Selection
-	pyautogui.click(x=1820, y=63)
-	time.sleep(10)
+    #Click Aircaft Selection
+    pyautogui.click(x=1820, y=63)
+    time.sleep(10)
 
 def take_queries():
 
 
-	#Navigate to the queries page
-	time.sleep(1)
-	pyautogui.click(x=1931, y=66)
-	time.sleep(20)
-	
-	#Navigate to the FBO queries page
-	pyautogui.click(x=843, y=231)
-	time.sleep(25)
+    #Navigate to the queries page
+    time.sleep(1)
+    pyautogui.click(x=1931, y=66)
+    time.sleep(20)
+    
+    #Navigate to the FBO queries page
+    pyautogui.click(x=843, y=231)
+    time.sleep(25)
 
-	# Load the JobsToTake.csv file into a DataFrame
-	jobs_df = pd.read_csv('JobsToTake.csv')
+    # Load the JobsToTake.csv file into a DataFrame
+    jobs_df = pd.read_csv('JobsToTake.csv')
 
-	# Load the FBOs.csv file into a DataFrame
-	fbos_df = pd.read_csv('FBOs.csv')
+    # Load the FBOs.csv file into a DataFrame
+    fbos_df = pd.read_csv('FBOs.csv')
 
-	# Get the values in the first field (field 0) from the JobsToTake.csv file
-	jobs_FBOID = set(jobs_df.iloc[:, 0].values)
-	
-	#Sort by Exp
-	pyautogui.click(x=1000, y=423)
-	time.sleep(1)
-	
-	#sort descending
-	pyautogui.click(x=1000, y=423)
-	time.sleep(1)
-	
+    # Get the values in the first field (field 0) from the JobsToTake.csv file
+    jobs_FBOID = set(jobs_df.iloc[:, 0].values)
+    
+    #Sort by Exp
+    pyautogui.click(x=1000, y=423)
+    time.sleep(1)
+    
+    #sort descending
+    pyautogui.click(x=1000, y=423)
+    time.sleep(1)
+    
 
-	#Clicking Select FBO
-	pyautogui.click(x=243, y=300)
-	time.sleep(1)
+    #Clicking Select FBO
+    pyautogui.click(x=243, y=300)
+    time.sleep(1)
 
-	# Go through each record in the fourth field (field 3) of the FBOs.csv file
-	for index, row in fbos_df.iterrows():
-		FBOs = row.iloc[3]  # Access the value in the fourth field (field 3)
+    # Go through each record in the fourth field (field 3) of the FBOs.csv file
+    for index, row in fbos_df.iterrows():
+        FBOs = row.iloc[3]  # Access the value in the fourth field (field 3)
 
-		# Check if the value exists in the first field (field 0) of the JobsToTake.csv file
-		if FBOs in jobs_FBOID:
-			#Select the FBO
-			pyautogui.sleep(1)
-			pyautogui.press('enter')
+        # Check if the value exists in the first field (field 0) of the JobsToTake.csv file
+        if FBOs in jobs_FBOID:
+            #Select the FBO
+            pyautogui.sleep(1)
+            pyautogui.press('enter')
 
-			#Wait ages for it to load
-			pyautogui.sleep(60)
+            #Wait ages for it to load
+            pyautogui.sleep(60)
 
-			#Sel cargo field
-			pyautogui.click(x=662, y=464)
-			pyautogui.sleep(1)
+            #Sel cargo field
+            pyautogui.click(x=662, y=464)
+            pyautogui.sleep(1)
 
-			#Copy the row
-			pyautogui.hotkey('ctrl', 'c')
-			pyautogui.sleep(1)
+            #Copy the row
+            pyautogui.hotkey('ctrl', 'c')
+            pyautogui.sleep(1)
 
-			current_job = pyperclip.paste().split("\t")
+            current_job = pyperclip.paste().split("\t")
 
-			fuckedLoop = 0
+            fuckedLoop = 0
 
-			while fuckedLoop < 300:
+            while fuckedLoop < 300:
 
-				for job_index, job_row in jobs_df.iterrows():
-					if job_row.iloc[0] == FBOs and abs(float(job_row.iloc[1].replace(',', '')) - float(current_job[16].replace(',', ''))) <= 1:
-						#We do the action here to take the job
-						#Headed left to the take button
-						pyautogui.press('left')
-						pyautogui.sleep(0.5)
+                for job_index, job_row in jobs_df.iterrows():
+                    if job_row.iloc[0] == FBOs and abs(float(job_row.iloc[1].replace(',', '')) - float(current_job[16].replace(',', ''))) <= 1:
+                        #We do the action here to take the job
+                        #Headed left to the take button
+                        pyautogui.press('left')
+                        pyautogui.sleep(0.5)
 
-						pyautogui.press('left')
-						pyautogui.sleep(0.5)
+                        pyautogui.press('left')
+                        pyautogui.sleep(0.5)
 
-						pyautogui.press('left')
-						pyautogui.sleep(0.5)
+                        pyautogui.press('left')
+                        pyautogui.sleep(0.5)
 
-						pyautogui.press('left')
-						pyautogui.sleep(0.5)
+                        pyautogui.press('left')
+                        pyautogui.sleep(0.5)
 
-						pyautogui.press('left')
-						pyautogui.sleep(0.5)
+                        pyautogui.press('left')
+                        pyautogui.sleep(0.5)
 
-						pyautogui.press('left')
-						pyautogui.sleep(0.5)
+                        pyautogui.press('left')
+                        pyautogui.sleep(0.5)
 
-						#Tab to highlight button
-						pyautogui.press('tab')
-						pyautogui.sleep(0.5)
+                        #Tab to highlight button
+                        pyautogui.press('tab')
+                        pyautogui.sleep(0.5)
 
-						#Enter to take job
-						pyautogui.press('enter')
-						#Long sleep for load screen
-						pyautogui.sleep(5)
+                        #Enter to take job
+                        pyautogui.press('enter')
+                        #Long sleep for load screen
+                        pyautogui.sleep(5)
 
-						#click back on cargo1
-						pyautogui.click(x=662, y=464)
-						pyautogui.sleep(0.5)
+                        #click back on cargo1
+                        pyautogui.click(x=662, y=464)
+                        pyautogui.sleep(0.5)
 
-						break
-				
-				#next record 
-				pyautogui.press('down')
-				pyautogui.sleep(1.5)
+                        break
+                
+                #next record 
+                pyautogui.press('down')
+                pyautogui.sleep(1.5)
 
-				#Copy the row
-				pyautogui.hotkey('ctrl', 'c')
-				pyautogui.sleep(1)
+                #Copy the row
+                pyautogui.hotkey('ctrl', 'c')
+                pyautogui.sleep(1)
 
-				if pyperclip.paste().split("\t") == current_job:
-					#There's probably no more jobs, time to move to the next job
-					#selecting FBO box
-					pyautogui.click(x=243, y=300)
-					pyautogui.sleep(0.5)
-					break
+                if pyperclip.paste().split("\t") == current_job:
+                    #There's probably no more jobs, time to move to the next job
+                    #selecting FBO box
+                    pyautogui.click(x=243, y=300)
+                    pyautogui.sleep(0.5)
+                    break
 
-				current_job = pyperclip.paste().split("\t")
-				fuckedLoop += 1
-		
-		#Next FBO
-		pyautogui.press('down')
-		pyautogui.sleep(0.5)
+                current_job = pyperclip.paste().split("\t")
+                fuckedLoop += 1
+        
+        #Next FBO
+        pyautogui.press('down')
+        pyautogui.sleep(0.5)
 
 def createWorkOrder(aircraft, workOrderName, listLocation):
 
-	#Aircraft is aircraft type
-	#workOrderName is VH-XXX
-	#List Location is where it is in the select aircraft list
-	#31 pixels * listLocation
-	load_fuel = 0
-	rest_crew = 0
-	print(str(listLocation))
+    #Aircraft is aircraft type
+    #workOrderName is VH-XXX
+    #List Location is where it is in the select aircraft list
+    #31 pixels * listLocation
+    load_fuel = 1
+    rest_crew = 1
+    print("Creating a workorder for " + workOrderName)
 
-	#Select All Aircraft
-	time.sleep(1)
-	pyautogui.click(x=287, y=231)
-	time.sleep(1)
+    #Select All Aircraft
+    time.sleep(1)
+    pyautogui.click(x=287, y=231)
+    time.sleep(1)
+
+    #Select Top Aircraft
+    pyautogui.click(x=315, y=318)
+    time.sleep(1)
     
-	#Select top aircraft
-	pyautogui.click(x=315, y=318)
-	time.sleep(1)
-	
-	#Select the right plane, starting at the first one, 30 pixels between each one
-	while listLocation > 0:
-		pyautogui.press("down")
-		time.sleep(0.1)
-		listLocation = listLocation - 1
+    #Select the right plane, starting at the first one, 30 pixels between each one
+    while listLocation > 0:
+        pyautogui.press("down")
+        time.sleep(0.1)
+        listLocation = listLocation - 1
+
+    #listLocation = 318 + (listLocation * 31.25)
+    #pyautogui.click(x=315, y=listLocation)
+    #time.sleep(1)
     
-	#listLocation = 318 + (listLocation * 31.25)
-	#pyautogui.click(x=315, y=listLocation)
-	#time.sleep(1)
-	
-	
-	#Select Copy Crew
-	pyautogui.click(x=1956, y=281)
-	time.sleep(1)
-	
-	pyautogui.doubleClick(x=200, y=282)
-	pyautogui.sleep(0.5)
-	pyautogui.hotkey('ctrl', 'c')
-	pyautogui.sleep(0.5)
-
-	#Starting the crew off with 0 hours
-	hoursWorked = 0
-
-	pyautogui.hotkey('ctrl', 'a')
-	pyautogui.write(workOrderName)
     
-	original_departure = 0
+    #Select Copy Crew
+    pyautogui.click(x=1956, y=281)
+    time.sleep(1)
+    
+    pyautogui.doubleClick(x=200, y=282)
+    pyautogui.sleep(0.5)
+    pyautogui.hotkey('ctrl', 'c')
+    pyautogui.sleep(1.5)
 
-	with open('workorder_' + workOrderName + '.csv', 'r') as file:
-		lines = file.readlines()
-		lines = lines[1:]
-		#Skipping header
-		#next(file)
+    #Starting the crew off with 0 hours
+    hoursWorked = 0
 
-		for i in range(len(lines)):
-			# Split the line into fields (assuming comma separated values)
-			
-			line = lines[i]
-			fields = line.strip().split(',')
+    pyautogui.hotkey('ctrl', 'a')
+    pyautogui.write(workOrderName)
+    
+    original_departure = 0
 
-			# Extract the relevant information
-			origin = fields[2]
-			destination = fields[3]
-			distance = int(round(float(fields[4])))
-			descript = fields[5]
+    with open('workorder_' + workOrderName + '.csv', 'r') as file:
+        lines = file.readlines()
+        lines = lines[1:]
+        #Skipping header
+        #next(file)
+
+        for i in range(len(lines)):
+            # Split the line into fields (assuming comma separated values)
+            
+            line = lines[i]
+            fields = line.strip().split(',')
+
+            # Extract the relevant information
+            origin = fields[2]
+            destination = fields[3]
+            distance = int(round(float(fields[4])))
+            descript = fields[5]
+            
             
             #Entering original departure
-		if original_departure == 0:
-			pyautogui.click(x=213, y=369)
-			time.sleep(0.5)
-			pyautogui.hotkey('ctrl', 'a')
-			time.sleep(0.5)
-			pyautogui.write(origin)
-			time.sleep(0.5)
-			original_departure = 1
-			
-			#Enter the dest icao
-			pyautogui.click(x=736, y=474)
-			pyautogui.sleep(0.2)
-			pyautogui.write(destination)
-			
-			#Starting line for first payload. We add 33 for each payload we go down        
+            if original_departure == 0:
+                pyautogui.click(x=213, y=369)
+                time.sleep(0.5)
+                pyautogui.hotkey('ctrl', 'a')
+                time.sleep(0.5)
+                pyautogui.write(origin)
+                time.sleep(0.5)
+                original_departure = 1
+            
+            
+            #Enter the dest icao
+            pyautogui.click(x=736, y=474)
+            pyautogui.sleep(0.2)
+            pyautogui.write(destination)
+            
+            #Starting line for first payload. We add 33 for each payload we go down        
 
-			pyautogui.click(x=978, y=875)
-			pyautogui.sleep(0.2)
-			
-			pyautogui.hotkey('ctrl', 'c')
-			pyautogui.sleep(1)
-			
-			currentPayload = pyperclip.paste().split("\t")
-			pyautogui.sleep(0.2)
-			
-			#Tab across to the load box
-			pyautogui.press('tab')
-			pyautogui.sleep(0.05)
-			pyautogui.press('tab')
-			pyautogui.sleep(0.05)
-			pyautogui.press('tab')
-			pyautogui.sleep(0.05)
-			pyautogui.press('tab')
-			pyautogui.sleep(0.05)
-			pyautogui.press('tab')
-			pyautogui.sleep(0.05)
-			pyautogui.press('tab')
-			pyautogui.sleep(0.05)
-			
-			fuckedLoop = 0
-			#Setting to check we look at the type before we load
-			ecoPaxLoaded = 0
-			busPaxLoaded = 0
-			firstPaxLoaded = 0
-			cargoLoaded = 0
+            pyautogui.click(x=978, y=875)
+            pyautogui.sleep(1.5)
+            
+            pyautogui.hotkey('ctrl', 'c')
+            pyautogui.sleep(1.5)
+            
+            currentPayload = pyperclip.paste().split("\t")
+            pyautogui.sleep(0.2)
+            
+            #Tab across to the load box
+            pyautogui.press('tab')
+            pyautogui.sleep(0.1)
+            pyautogui.press('tab')
+            pyautogui.sleep(0.1)
+            pyautogui.press('tab')
+            pyautogui.sleep(0.1)
+            pyautogui.press('tab')
+            pyautogui.sleep(0.1)
+            pyautogui.press('tab')
+            pyautogui.sleep(0.1)
+            pyautogui.press('tab')
+            pyautogui.sleep(0.1)
+            
+            
+            pyautogui.hotkey('ctrl', 'c')
+            time.sleep(1.5)
 
-		
-			while fuckedLoop < 10000:
-				#print("-")
-				#print(currentPayload[1] + " - " + str(len(currentPayload[11])) + " - " + currentPayload[12] + " - " + str(len(currentPayload[13])) + " - " + currentPayload[3][:2] + currentPayload[3][-1:] + " - " + currentPayload[3][:2] + " - " + currentPayload[3][-1:])
-				
-				#Check to see if the current record matches
-				if currentPayload[1] == destination and len(currentPayload[11]) == 0 and currentPayload[12] == 'False' and len(currentPayload[13]) < 4 and descript == currentPayload[3][:2] + currentPayload[3][-1:] or currentPayload[1] == destination and len(currentPayload[11]) == 0 and currentPayload[12] == 'False' and len(currentPayload[13]) < 4 and descript == currentPayload[3][:2] and currentPayload[3][-1:] != "n":
-			#print('currentPayload[12] = ' + str(currentPayload[12]))
-			
-					if "Eco" in currentPayload[3] and ecoPaxLoaded == 0:
-						pyautogui.press('tab')
-						pyautogui.sleep(0.05)
-						pyautogui.press('space')
-						pyautogui.sleep(0.05)
-						ecoPaxLoaded = 1
+            comparisonPasteVariable = 0
+            fuckedLoop = 0
+            #Setting to check we look at the type before we load
+            if aircraft == 'Airbus A320':
+                ecoPaxLoaded = 0
+                busPaxLoaded = 1
+                firstPaxLoaded = 1
+                cargoLoaded = 1
+                
+            if aircraft == 'Boeing 787-10':
+                ecoPaxLoaded = 0
+                busPaxLoaded = 0
+                firstPaxLoaded = 0
+                cargoLoaded = 0
+            
 
-					if "Bus" in currentPayload[3] and busPaxLoaded == 0:
-						pyautogui.press('tab')
-						pyautogui.sleep(0.05)
-						pyautogui.press('space')
-						pyautogui.sleep(0.05)
-						busPaxLoaded = 1
-					
-					if "First" in currentPayload[3] and firstPaxLoaded == 0:
-						pyautogui.press('tab')
-						pyautogui.sleep(0.05)
-						pyautogui.press('space')
-						pyautogui.sleep(0.05)
-						firstPaxLoaded = 1
-						
-					if "Cargo" in currentPayload[3] and cargoLoaded == 0:
-						pyautogui.press('tab')
-						pyautogui.sleep(0.05)
-						pyautogui.press('space')
-						pyautogui.sleep(0.05)
-						cargoLoaded = 1
+        
+            while fuckedLoop < 10000:
+                #print("-")
+                #print(currentPayload[1] + " - " + str(len(currentPayload[11])) + " - " + currentPayload[12] + " - " + str(len(currentPayload[13])) + " - " + currentPayload[3][:2] + currentPayload[3][-1:] + " - " + currentPayload[3][:2] + " - " + currentPayload[3][-1:])
+                
+                time.sleep(1.5)
+                
+                #Check to see if the current record matches
+                if currentPayload[1] == destination and len(currentPayload[11]) == 0 and currentPayload[12] == 'False' and len(currentPayload[13]) < 4 and descript == currentPayload[3][:2] + currentPayload[3][-1:] or currentPayload[1] == destination and len(currentPayload[11]) == 0 and currentPayload[12] == 'False' and len(currentPayload[13]) < 4 and descript == currentPayload[3][:2] and currentPayload[3][-1:] != "n":
+                #print('currentPayload[12] = ' + str(currentPayload[12]))
+            
+                    if "Eco" in currentPayload[3] and ecoPaxLoaded == 0:
+                        pyautogui.press('tab')
+                        pyautogui.sleep(0.2)
+                        pyautogui.press('space')
+                        pyautogui.sleep(0.2)
+                        ecoPaxLoaded = 1
 
-
-				#currentPayload[1] != destination or len(currentPayload[11]) > 0 or currentPayload[12] != 'False' or len(currentPayload[13]) > 2:
-				pyautogui.press('down')
-				pyautogui.sleep(1)
-				
-				#Copy Next Row
-				pyautogui.hotkey('ctrl', 'c')
-				pyautogui.sleep(1)
-
-				if pyperclip.paste().split("\t") == currentPayload: #There's probably no more jobs, time to move to the next job
-					break
-
-				currentPayload = pyperclip.paste().split("\t")
-				fuckedLoop += 1
-				if fuckedLoop == 100:
-					print('Probably no job available that matches the destination airport')
-					exit()           
-
-			#We should have loaded all the jobs now
-			fuckedLoop = 0
-			if ecoPaxLoaded == 0:
-				aaaaa = 1
-				print('Good chance job is fucked, no eco pax loaded')
-					
-					
-
-						
-			ecoPaxLoaded = 0
-			busPaxLoaded = 0
-			firstPaxLoaded = 0
-			cargoLoaded = 0
-			if aircraft == 'Airbus A320':
-				ffph = 847
-				knots = 447
-				
-			if aircraft == 'TBM9':
-				ffph = 54
-				knots = 330
-				
-			if aircraft == 'Boeing 787-10':
-				ffph = 2534
-				knots = 488
-
-			#Set Fuel
-			if load_fuel == 1:
-							
-				#The formula for A320 we use is ((Distance / Knots) * Fuel Flow Per hour) + Fuel flow per hour, with the addition being 1 hour of reserve.    
-				fuel = round(((distance / knots) * ffph) + ffph)
-				
-				pyautogui.click(x=1246, y=519)
-				pyautogui.sleep(0.1)
-				pyautogui.write(str(fuel))
-				pyautogui.sleep(0.1)
-			else:
-				#Select don't load fuel
-				pyautogui.click(x=600, y=554)
-			
-			
-			#Set whether crew sleep
-			# Divide the flight distance by the speed and then add 36 minutes of mucking about
-			hoursWorked += (distance / knots) + 0.6
-			#print('Current hours worked:' + str(round(hoursWorked, 1)))
-
-			
-			if i+1 < len(lines):
-				# get the distance for the next job
-				next_distance = int(round(float(lines[i+1].strip().split(',')[4])))
-				next_hours = (next_distance / knots) + 0.6
-				#print('Next flight hours: ' + str(next_hours))
-				#print('Predicted next flight hours: ' + str(next_hours + hoursWorked))
-			else:
-				next_hours = 14 #To force a crew rest before starting the new work order.
-
-			if hoursWorked + next_hours > 13 and rest_crew == 1:
-				hoursWorked = 0
-				pyautogui.click(x=1917, y=550)
+                    if "Bus" in currentPayload[3] and busPaxLoaded == 0:
+                        pyautogui.press('tab')
+                        pyautogui.sleep(0.2)
+                        pyautogui.press('space')
+                        pyautogui.sleep(0.2)
+                        busPaxLoaded = 1
+                    
+                    if "First" in currentPayload[3] and firstPaxLoaded == 0:
+                        pyautogui.press('tab')
+                        pyautogui.sleep(0.2)
+                        pyautogui.press('space')
+                        pyautogui.sleep(0.2)
+                        firstPaxLoaded = 1
+                        
+                    if "Cargo" in currentPayload[3] and cargoLoaded == 0:
+                        pyautogui.press('tab')
+                        pyautogui.sleep(0.2)
+                        pyautogui.press('space')
+                        pyautogui.sleep(0.2)
+                        cargoLoaded = 1
 
 
+                #currentPayload[1] != destination or len(currentPayload[11]) > 0 or currentPayload[12] != 'False' or len(currentPayload[13]) > 2:
+                pyautogui.sleep(0.5)
+                pyautogui.press('down')
+                pyautogui.sleep(0.5)
+                
+                #Copy Next Row
+                pyautogui.hotkey('ctrl', 'c')
+                time.sleep(1.5)
+                
+                if pyperclip.paste().split("\t") == currentPayload: #There's probably no more jobs, time to move to the next job
+                    if comparisonPasteVariable < 4:
+                        pyautogui.press('down')
+                        pyautogui.sleep(0.5)
+                        
+                        #Copy Next Row
+                        pyautogui.hotkey('ctrl', 'c')
+                        time.sleep(1)
+                        comparisonPasteVariable += 1
+                    else:
+                        break
 
-			# If hours worked is over 11 (which gives a 2 hour gap of fucking about) then rest the crew
-			#if hoursWorked > 11 and rest_crew == 1:
-			#    hoursWorked = 0
-			#    pyautogui.click(x=1917, y=550)
 
-			#Add a new leg
-			pyautogui.click(x=130, y=463)
-			pyautogui.sleep(0.2)
+                currentPayload = pyperclip.paste().split("\t")
+                fuckedLoop += 1
+                if fuckedLoop == 100:
+                    print('Probably no job available that matches the destination airport')
+                    exit()           
 
-	#Select Delete Leg
-	pyautogui.click(x=263, y=466)
-	pyautogui.sleep(3)
+            #We should have loaded all the jobs now
+            
+            if ecoPaxLoaded == 0 or busPaxLoaded == 0 or firstPaxLoaded == 0:
+                print("Looking for " + origin + " -> " + destination + " | " + descript + " | Eco Pax: " + str(ecoPaxLoaded))
+                print(fuckedLoop)
+                aaaaa = input('Good chance job is fucked, we missed some pax - hit enter to proceed')
+                pyautogui.click(x=1000, y=10)
 
-	#Select box
-	pyautogui.click(x=1960, y=1134)
-	pyautogui.sleep(2)
-	pyautogui.press('enter')
-	pyautogui.sleep(1)
 
-	#Select Save
-	pyautogui.click(x=3639, y=228)
-	pyautogui.sleep(10)
+            fuckedLoop = 0
+            ecoPaxLoaded = 0
+            busPaxLoaded = 0
+            firstPaxLoaded = 0
+            cargoLoaded = 0
+            if aircraft == 'Airbus A320':
+                ffph = 847
+                knots = 447
+                
+            if aircraft == 'TBM9':
+                ffph = 54
+                knots = 330
+                
+            if aircraft == 'Boeing 787-10':
+                ffph = 2534
+                knots = 488
 
-	#Select Back
-	pyautogui.click(x=25, y=117)
-	pyautogui.sleep(10)
+            #Set Fuel
+            if load_fuel == 1:
+                            
+                #The formula for A320 we use is ((Distance / Knots) * Fuel Flow Per hour) + Fuel flow per hour, with the addition being 1 hour of reserve.    
+                fuel = round(((distance / knots) * ffph) + ffph)
+                
+                pyautogui.click(x=1246, y=519)
+                pyautogui.sleep(0.1)
+                pyautogui.write(str(fuel))
+                pyautogui.sleep(0.1)
+            else:
+                #Select don't load fuel
+                pyautogui.click(x=600, y=554)
+            
+            
+            #Set whether crew sleep
+            # Divide the flight distance by the speed and then add 36 minutes of mucking about
+            hoursWorked += (distance / knots) + 0.6
+            #print('Current hours worked:' + str(round(hoursWorked, 1)))
+
+            
+            if i+1 < len(lines):
+                # get the distance for the next job
+                next_distance = int(round(float(lines[i+1].strip().split(',')[4])))
+                next_hours = (next_distance / knots) + 0.6
+                #print('Next flight hours: ' + str(next_hours))
+                #print('Predicted next flight hours: ' + str(next_hours + hoursWorked))
+            else:
+                next_hours = 14 #To force a crew rest before starting the new work order.
+
+            if hoursWorked + next_hours > 13 and rest_crew == 1:
+                hoursWorked = 0
+                pyautogui.click(x=1917, y=550)
+
+
+
+            # If hours worked is over 11 (which gives a 2 hour gap of fucking about) then rest the crew
+            #if hoursWorked > 11 and rest_crew == 1:
+            #    hoursWorked = 0
+            #    pyautogui.click(x=1917, y=550)
+
+            #Add a new leg
+            pyautogui.click(x=130, y=463)
+            pyautogui.sleep(0.2)
+
+    #Select Delete Leg
+    pyautogui.click(x=263, y=466)
+    pyautogui.sleep(3)
+
+    #Select box
+    pyautogui.click(x=1960, y=1134)
+    pyautogui.sleep(2)
+    pyautogui.press('enter')
+    pyautogui.sleep(1)
+
+    #Select Save
+    pyautogui.click(x=3639, y=228)
+    pyautogui.sleep(10)
+
+    #Select Back
+    pyautogui.click(x=25, y=117)
+    pyautogui.sleep(10)
 
 def workOrder_controller():
-	#We will make all the workorders from here, because it's stupid how hard it is to make :(
-	
-	#Navigate to the workorder page
-	
-	time.sleep(30)
-	
-	pyautogui.click(x=150, y=70)
-	time.sleep(5)
-	
-	#Click the menu
-	pyautogui.click(x=150, y=290)
-	time.sleep(40)
-	#waiting for onair to load the workorder page
-	
-	
-	
-	#build aircraft list
-	fleetList = [file for file in os.listdir('.') if file.startswith('workorder_')]
-	fleetList = [filename.replace('workorder_', '').replace('.csv', '') for filename in fleetList]
+    #We will make all the workorders from here, because it's stupid how hard it is to make :(
+    
+    #Navigate to the workorder page
+    
+    time.sleep(30)
+    
+    pyautogui.click(x=150, y=70)
+    time.sleep(5)
+    
+    #Click the menu
+    pyautogui.click(x=150, y=290)
+    time.sleep(40)
+    #waiting for onair to load the workorder page
+    
+    
+    
+    #build aircraft list
+    fleetList = [file for file in os.listdir('.') if file.startswith('workorder_')]
+    fleetList = [filename.replace('workorder_', '').replace('.csv', '') for filename in fleetList]
 
-	# Read the CSV file
-	df = pd.read_csv('fleet.csv')
+    # Read the CSV file
+    df = pd.read_csv('fleet.csv')
 
-	# Iterate over each item in fleetList
-	for item in fleetList:
-		# Find the rows where the identifier matches the item
-		matching_rows = df[df['Identifier'] == item]
-		
-		# Call createworkorder for each matching row
-		for index, row in matching_rows.iterrows():
-			print("Attempting to create " + row['Identifier'])
-			#Click add work order
-			pyautogui.click(x=1220, y=174)
-			time.sleep(5)
-			createWorkOrder(row['Aircraft Type'], row['Identifier'], index)	
+    # Iterate over each item in fleetList
+    for item in fleetList:
+        # Find the rows where the identifier matches the item
+        matching_rows = df[df['Identifier'] == item]
+        
+        # Call createworkorder for each matching row
+        for index, row in matching_rows.iterrows():
+            print("Attempting to create " + row['Identifier'])
+            #Click add work order
+            pyautogui.click(x=1220, y=174)
+            time.sleep(5)
+            createWorkOrder(row['Aircraft Type'], row['Identifier'], index) 
 
 def find_aircraft_type(identifier):
     file_path = 'fleet.csv'
@@ -1092,31 +1121,32 @@ def queryFleet():
         print(f"API Request Error: {error}")
 
 def RefuelFBOs():
-	time.sleep(30)
-	
-	pyautogui.click(x=150, y=50)
-	time.sleep(1)
-	
-	#Click the menu (MY FBOs)
-	pyautogui.click(x=150, y=480)
-	time.sleep(20)
-	
-	#Click refuel
-	pyautogui.click(x=2119, y=177)
-	time.sleep(20)
-	
-	#Click the popup box
-	pyautogui.click(x=1890, y=1084)
-	time.sleep(20)
-	
-	#Press okay - commented so we can see when the operation is done
-	#pyautogui.press('enter')
-	#pyautogui.sleep(1)
+    time.sleep(30)
+    
+    pyautogui.click(x=150, y=50)
+    time.sleep(1)
+    
+    #Click the menu (MY FBOs)
+    pyautogui.click(x=150, y=480)
+    time.sleep(20)
+    
+    #Click refuel
+    pyautogui.click(x=2119, y=177)
+    time.sleep(20)
+    
+    #Click the popup box
+    pyautogui.click(x=1890, y=1084)
+    time.sleep(20)
+    
+    #Press okay - commented so we can see when the operation is done
+    #pyautogui.press('enter')
+    #pyautogui.sleep(1)
 
 
 player_selected_aircraft = input("Enter the registration of the aircraft you're flying: ").upper()
 player_flight_amount = int(input("Enter the maximum amount of flights you would like to do: "))
 player_starting_airport = input("Enter the ICAO of the airport you are starting at, e.g. YSSY: ").upper()
+playerMixup = int(input("Type 1 to enable player mixup: "))
 
 LaunchandPrepOnair()
 print("Onair Prepped and Launched")
@@ -1170,23 +1200,23 @@ queryFleet()
 
 
 
-automation_flights(player_starting_airport, find_aircraft_type(player_selected_aircraft), player_flight_amount, player_selected_aircraft)
+automation_flights(player_starting_airport, find_aircraft_type(player_selected_aircraft), player_flight_amount, player_selected_aircraft, playerMixup)
 
 
 file_name_jobs = 'JobsToTake.csv'
 
 time.sleep(1)
 if os.path.exists(file_name_jobs):
-	take_queries()
-	time.sleep(1)
-	#Click to get rid of the dialog box
-	pyautogui.click(x=1394, y=20)
-	
+    take_queries()
+    time.sleep(1)
+    #Click to get rid of the dialog box
+    pyautogui.click(x=1394, y=20)
+    
 
 if os.path.exists(file_name_jobs):
-	time.sleep(1)
-	queryFleet()
-	time.sleep(1)
-	workOrder_controller()
+    time.sleep(1)
+    queryFleet()
+    time.sleep(1)
+    workOrder_controller()
 
 aaaaa = input('Press Enter to finish...')
