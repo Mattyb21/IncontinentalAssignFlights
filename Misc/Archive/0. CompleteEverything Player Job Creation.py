@@ -287,48 +287,16 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName, player
 
     last_minute = 1 #disables last minute running
     playerMixup = playerMixup
+    route_amount = preset
+    hours = 75
+    max_Hours = 100
 
-    if preset == "a":
-        route_amount = 4
-        hours = 22
-        max_Hours = 13
-
-    if preset == "b":
-        route_amount = 8
-        hours = 44
-        max_Hours = 26
-
-    if preset == "c":
-        route_amount = 12
-        hours = 66
-        max_Hours = 39
-
-    if preset == "d":
-        route_amount = 16
-        hours = 88
-        max_Hours = 52
-
-    if preset == "e":
-        route_amount = 20
-        hours = 110
-        max_Hours = 66
-
-    if preset == "f":
-        route_amount = 24
-        hours = 132
-        max_Hours = 79
-
-    if preset == "g":
-        route_amount = 28
-        hours = 154
-
-    route, work_order, jobs_take, total_pay, selected_mission_ids = plan_route(starting_icao, 1, last_minute, hours, route_amount, max_Hours, playerMixup, aircraftName)
+    route, work_order, jobs_take, total_pay, selected_mission_ids = plan_route(starting_icao, 0, last_minute, hours, route_amount, max_Hours, playerMixup, aircraftName)
 
     if selected_mission_ids:
         remove_selected_missions(selected_mission_ids)
 
 def get_workorders(aircraft_list):
-    #Checks current work orders and then removes aircraft that have them
     companyId = "c1069b00-adf0-4f00-b744-4287071e5484"
     endpoint = f"https://server1.onair.company/api/v1/company/{companyId}/workorders"
     apiKey = "8e62f5f0-b026-4301-a8d8-122a2d34bd4e"
@@ -337,7 +305,7 @@ def get_workorders(aircraft_list):
         "Accept": "application/json",
         "oa-apikey": apiKey
     }
-    
+
     try:
         response = requests.get(endpoint, headers=headers)
         data = json.loads(response.text)
@@ -346,17 +314,12 @@ def get_workorders(aircraft_list):
 
         # Filter work orders that contain "CREW" in the aircraft identifier
         work_order_list = [wo for wo in work_order_list if 'CREW' not in wo['Name']]
-        #work_order_list = [wo for wo in work_order_list if wo['Status'] == 1]
 
         # Create a list of identifiers of aircraft in work orders
         work_order_aircraft_list = [wo['Aircraft']['Identifier'] for wo in work_order_list]
         
-        print("Aircraft in operation: ")
-        print(work_order_aircraft_list)
-        
-        
     except Exception as error:
-        print(f"API Request Error (Get Workorders): {error}")
+        print(f"API Request Error: {error}")
 
     # Remove aircraft in work_order_aircraft_list from aircraft_list
     aircraft_list = [ac for ac in aircraft_list if ac not in work_order_aircraft_list]
@@ -412,7 +375,7 @@ def queryFBOJobs():
 
         response = requests.get(endpoint, headers=headers)
         statusCode = response.status_code
-        #print(f"Response Status Code for FBO ID {fboId}: {statusCode}")
+        print(f"Response Status Code for FBO ID {fboId}: {statusCode}")
 
         if statusCode == 200:
             responseData = response.text
@@ -514,88 +477,80 @@ def queryFBOs():
         print(f"API Request Error: {error}")
 
 def aircraftmaintenance(aircraft_List):
-    # We will insert the aircraft maintenance part here
-    aircraft_names = [entry['Aircraft'] for entry in aircraft_List]
-    time.sleep(20)
-    
-    # Sort by 100h
-    pyautogui.click(x=1741, y=303)
-    time.sleep(2)
+    #We will insert the aircraft maintenance part here
 
-    # Click first row
-    pyautogui.click(x=1741, y=347)
+    time.sleep(5)
+    #Sort by 100h
+    pyautogui.click(x=1722, y=303)
     time.sleep(1)
 
-    # Copy data from first row
+    #Click first row
+    pyautogui.click(x=1722, y=347)
+    time.sleep(1)
+
+    #Copy data from first row
     pyautogui.hotkey('ctrl', 'c')
-    time.sleep(1.5)
+    time.sleep(1)
     ac_maint_line = pyperclip.paste().split("\t")
     time.sleep(1)
     maint_variable = 347
-    # 40 pixels per row
+    #40 pixels per row
 
     while True:
 
         if 'Needed' not in ac_maint_line[3]:
-            if float(ac_maint_line[10].split()[0]) > 35:
+            if float(ac_maint_line[10].split()[0]) > 30:
                 break
-        
-        if ac_maint_line[0] in aircraft_names and 'Needed' not in ac_maint_line[4]:
-            # Do maintenance
-            # Select Manage
-            print("Doing maintenance on " + ac_maint_line[0])
+
+        if ac_maint_line[0] in aircraft_List and 'Needed' not in ac_maint_line[3]:
+            #Do maintenance
+            #Select Manage
             pyautogui.click(x=720, y=maint_variable)
             time.sleep(1)
             
-            # Select Workshop
+            #Select Workshop
             pyautogui.click(x=1050, y=maint_variable + 116)
             time.sleep(15)
             
-            # Select 100h or annual
-            if float(ac_maint_line[11]) < 8:
-                #Select annual
-                pyautogui.click(x=662, y=800)
-                time.sleep(1)
-            else:
-                #Select 100h
-                pyautogui.click(x=662, y=843)
-                time.sleep(1)
+            #Select 100h
+            pyautogui.click(x=662, y=843)
+            time.sleep(1)
             
-            # Repair Airframe
+            #Repair Airframe
             pyautogui.click(x=718, y=972)
             time.sleep(1)
             
-            # Engine 1
+            #Engine 1
             pyautogui.click(x=1094, y=1045)
             time.sleep(1)
             
-            # Engine 2
+            #engine 2
             pyautogui.click(x=1094, y=1078)
             time.sleep(1)
             
-            # Airframe Cond
+            #Airframe Cond
             pyautogui.click(x=1020, y=967)
             time.sleep(1)
             pyautogui.write('99')
             time.sleep(1)
             
-            # E1 cond
+            #e1 cond
             pyautogui.click(x=726, y=1045)
             time.sleep(1)
             pyautogui.write('99')
             time.sleep(1)
             
-            # E2 cond
+            #e2 cond
             pyautogui.click(x=726, y=1078)
             time.sleep(1)
             pyautogui.write('99')
             time.sleep(1)
             
-            # Dropdown Box for FBO
+            #Dropdown Box for FBO
             pyautogui.click(x=2790, y=326)
             time.sleep(1)
             
-            # YMML - Only one FBO
+            #YMML - Only one FBO
             if ac_maint_line[3] == "YMML":
                 pyautogui.click(x=2790, y=360)
                 time.sleep(1)
@@ -608,29 +563,29 @@ def aircraftmaintenance(aircraft_List):
                 pyautogui.click(x=2790, y=440)
                 time.sleep(1)
             
-            # Get quote
+            #Get quote
             pyautogui.click(x=3204, y=323)
             time.sleep(2)
 
-            # Pay and start
+            #pay and start
             pyautogui.click(x=3124, y=611)
-            time.sleep(40)
+            time.sleep(10)
             
-            # Sort by 100h
-            pyautogui.click(x=1741, y=303)
+            #Sort by 100h
+            pyautogui.click(x=1722, y=303)
             time.sleep(1)
 
         maint_variable += 40
 
-        # Click on next row
-        pyautogui.click(x=1741, y=maint_variable)
+        #Click on next row
+        pyautogui.click(x=1722, y=maint_variable)
         time.sleep(1)
         
         pyautogui.hotkey('ctrl', 'c')
-        time.sleep(1.5)
+        time.sleep(1)
         ac_maint_line = pyperclip.paste().split("\t")
         time.sleep(1)
-
+    
 def LaunchandPrepOnair():
 
     #We will insert launch info here:
@@ -675,7 +630,7 @@ def LaunchandPrepOnair():
 
     #Click Aircaft Selection
     pyautogui.click(x=1820, y=63)
-    time.sleep(15)
+    time.sleep(10)
 
 def take_queries():
 
@@ -730,7 +685,7 @@ def take_queries():
 
             #Copy the row
             pyautogui.hotkey('ctrl', 'c')
-            pyautogui.sleep(1.5)
+            pyautogui.sleep(1)
 
             current_job = pyperclip.paste().split("\t")
 
@@ -781,7 +736,7 @@ def take_queries():
 
                 #Copy the row
                 pyautogui.hotkey('ctrl', 'c')
-                pyautogui.sleep(1.5)
+                pyautogui.sleep(1)
 
                 if pyperclip.paste().split("\t") == current_job:
                     #There's probably no more jobs, time to move to the next job
@@ -882,10 +837,10 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
             #Starting line for first payload. We add 33 for each payload we go down        
 
             pyautogui.click(x=978, y=875)
-            pyautogui.sleep(0.2)
+            pyautogui.sleep(1.5)
             
             pyautogui.hotkey('ctrl', 'c')
-            pyautogui.sleep(0.2)
+            pyautogui.sleep(1.5)
             
             currentPayload = pyperclip.paste().split("\t")
             pyautogui.sleep(0.2)
@@ -906,9 +861,8 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
             
             
             pyautogui.hotkey('ctrl', 'c')
-            time.sleep(0.2)
-            currentPayload = pyperclip.paste().split("\t")
-            
+            time.sleep(1.5)
+
             comparisonPasteVariable = 0
             fuckedLoop = 0
             #Setting to check we look at the type before we load
@@ -929,6 +883,8 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
             while fuckedLoop < 10000:
                 #print("-")
                 #print(currentPayload[1] + " - " + str(len(currentPayload[11])) + " - " + currentPayload[12] + " - " + str(len(currentPayload[13])) + " - " + currentPayload[3][:2] + currentPayload[3][-1:] + " - " + currentPayload[3][:2] + " - " + currentPayload[3][-1:])
+                
+                time.sleep(1.5)
                 
                 #Check to see if the current record matches
                 if currentPayload[1] == destination and len(currentPayload[11]) == 0 and currentPayload[12] == 'False' and len(currentPayload[13]) < 4 and descript == currentPayload[3][:2] + currentPayload[3][-1:] or currentPayload[1] == destination and len(currentPayload[11]) == 0 and currentPayload[12] == 'False' and len(currentPayload[13]) < 4 and descript == currentPayload[3][:2] and currentPayload[3][-1:] != "n":
@@ -964,21 +920,22 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
 
 
                 #currentPayload[1] != destination or len(currentPayload[11]) > 0 or currentPayload[12] != 'False' or len(currentPayload[13]) > 2:
+                pyautogui.sleep(0.5)
                 pyautogui.press('down')
-                pyautogui.sleep(0.2)
+                pyautogui.sleep(0.5)
                 
                 #Copy Next Row
                 pyautogui.hotkey('ctrl', 'c')
-                time.sleep(0.2)
+                time.sleep(1.5)
                 
                 if pyperclip.paste().split("\t") == currentPayload: #There's probably no more jobs, time to move to the next job
                     if comparisonPasteVariable < 4:
                         pyautogui.press('down')
-                        pyautogui.sleep(0.2)
+                        pyautogui.sleep(0.5)
                         
                         #Copy Next Row
                         pyautogui.hotkey('ctrl', 'c')
-                        time.sleep(0.2)
+                        time.sleep(1)
                         comparisonPasteVariable += 1
                     else:
                         break
@@ -1071,17 +1028,13 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
     pyautogui.press('enter')
     pyautogui.sleep(1)
 
-if PlayerJobCreationFile == 0:
-    #Select Activate
-    pyautogui.click(x=3465, y=228)
-    pyautogui.sleep(10)
-else:
     #Select Save
-    pyautogui.click(x=3465, y=228)
     pyautogui.click(x=3639, y=228)
     pyautogui.sleep(10)
+
     #Select Back
     pyautogui.click(x=25, y=117)
+    pyautogui.sleep(10)
 
 def workOrder_controller():
     #We will make all the workorders from here, because it's stupid how hard it is to make :(
@@ -1119,6 +1072,16 @@ def workOrder_controller():
             pyautogui.click(x=1220, y=174)
             time.sleep(5)
             createWorkOrder(row['Aircraft Type'], row['Identifier'], index) 
+
+def find_aircraft_type(identifier):
+    file_path = 'fleet.csv'
+    fleet_df = pd.read_csv(file_path)
+    matched_row = fleet_df[fleet_df["Identifier"] == identifier]
+    if not matched_row.empty:
+        return matched_row["Aircraft Type"].iloc[0]
+    else:
+        aaaaa = input("Please recheck the aircraft identifier: ")
+        return "Aircraft not found in fleet"
 
 def queryFleet():
     companyId = "c1069b00-adf0-4f00-b744-4287071e5484"
@@ -1178,36 +1141,16 @@ def RefuelFBOs():
     #Press okay - commented so we can see when the operation is done
     #pyautogui.press('enter')
     #pyautogui.sleep(1)
-    
-def find_aircraft_type(identifier):
-    file_path = 'fleet.csv'
-    fleet_df = pd.read_csv(file_path)
-    matched_row = fleet_df[fleet_df["Identifier"] == identifier]
-    if not matched_row.empty:
-        return matched_row["Aircraft Type"].iloc[0]
-    else:
-        aaaaa = input("Please recheck the aircraft identifier: ")
-        return "Aircraft not found in fleet"    
-
-global PlayerJobCreationFile, NoNewJobsFile, CompleteEverythingFile
-
-#************* SETTINGS ***********#
-PlayerJobCreationFile = 0
-NoNewJobsFile = 0
-CompleteEverythingFile = 1
-
-if PlayerJobCreationFile == 1:
-    player_selected_aircraft = input("Enter the registration of the aircraft you're flying: ").upper()
-    player_flight_amount = int(input("Enter the maximum amount of flights you would like to do: "))
-    player_starting_airport = input("Enter the ICAO of the airport you are starting at, e.g. YSSY: ").upper()
-    playerMixup = int(input("Type 1 to enable player mixup: "))
 
 
+player_selected_aircraft = input("Enter the registration of the aircraft you're flying: ").upper()
+player_flight_amount = int(input("Enter the maximum amount of flights you would like to do: "))
+player_starting_airport = input("Enter the ICAO of the airport you are starting at, e.g. YSSY: ").upper()
+playerMixup = int(input("Type 1 to enable player mixup: "))
 
-
-pyautogui.PAUSE = 0
 LaunchandPrepOnair()
 print("Onair Prepped and Launched")
+
 
 if os.path.exists('JobsToTake.csv'):
     os.remove('JobsToTake.csv')
@@ -1218,56 +1161,46 @@ if os.path.exists('JobsToTake.csv'):
             os.remove(file_name)
 
 
-aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
-aircraft_List = aircraftInOperation['Aircraft'].tolist()
-aircraft_List = get_workorders(aircraft_List)
-
-
-aircraftmaintenance(aircraft_List)
-print("Aircraft Maintenance Complete")
-
-
 #Query FBO's and Jobs
 queryFBOs()
 print("FBO Query Complete")
+queryFBOJobs()
+print("FBO Job Query Complete")
+
+#Pull the fleet info
+queryFleet()
+
+#aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
+#aircraft_List = aircraftInOperation['Aircraft'].tolist()
+#aircraft_List = get_workorders(aircraft_List)
+
+#aircraftmaintenance(aircraft_List)
+#print("Aircraft Maintenance Complete")
 
 
-checkForQueries = 0
+
+#for aircraft_info in aircraft_List:
+#    hours_before_inspection = aircraft_info['HoursBefore100HInspection']
+#    if hours_before_inspection != 'N/A':  # Ensure the data exists
+#        hours_before_inspection = float(hours_before_inspection)  # Convert to float if necessary
+#        if 52 <= hours_before_inspection:
+#            preset = "d"
+#        elif 39 <= hours_before_inspection < 52:
+#            preset = "c"
+#        elif 30 <= hours_before_inspection < 39:
+#            preset = "b"
+#        
+#        if hours_before_inspection >= 30:  # Aircraft doesn't need maintenance
+#            automation_flights(aircraft_info['Airport'], aircraft_info['DisplayName'], preset, aircraft_info['Aircraft'])
+#            print("Route created for " + aircraft_info['Aircraft'])
+#        else:
+#            print(aircraft_info['Aircraft'] + " needs maintenance")
 
 
-if PlayerJobCreationFile == 0: #We are just running the below if it's not for a player
-    #We will check if we need to check the queries
-    for aircraft_info in aircraft_List:
-        hours_before_inspection = aircraft_info['HoursBefore100HInspection']
-        if hours_before_inspection != 'N/A':  # Ensure the data exists
-            hours_before_inspection = float(hours_before_inspection)  # Convert to float if necessary
-            if hours_before_inspection >= 35 :
-                checkForQueries = 1
 
-    if checkForQueries = 1:
-        queryFBOJobs()
-        print("FBO Job Query Complete")
 
-    for aircraft_info in aircraft_List:
-        hours_before_inspection = aircraft_info['HoursBefore100HInspection']
-        if hours_before_inspection != 'N/A':  # Ensure the data exists
-            hours_before_inspection = float(hours_before_inspection)  # Convert to float if necessary
-            if 52 <= hours_before_inspection:
-                preset = "d"
-            elif 39 <= hours_before_inspection < 52:
-                preset = "c"
-            elif 35 <= hours_before_inspection < 39:
-                preset = "b"
-            
-            if hours_before_inspection >= 35:  # Aircraft doesn't need maintenance
-                automation_flights(aircraft_info['Airport'], aircraft_info['DisplayName'], preset, aircraft_info['Aircraft'], 0)
-                print("Route created for " + aircraft_info['Aircraft'])
-            else:
-                print(aircraft_info['Aircraft'] + " in maintenance")
-else:
-    queryFBOJobs()
-    queryFleet()
-    automation_flights(player_starting_airport, find_aircraft_type(player_selected_aircraft), player_flight_amount, player_selected_aircraft, playerMixup)
+
+automation_flights(player_starting_airport, find_aircraft_type(player_selected_aircraft), player_flight_amount, player_selected_aircraft, playerMixup)
 
 
 file_name_jobs = 'JobsToTake.csv'
@@ -1285,9 +1218,5 @@ if os.path.exists(file_name_jobs):
     queryFleet()
     time.sleep(1)
     workOrder_controller()
-
-if PlayerJobCreationFile == 0:
-    RefuelFBOs()
-
 
 aaaaa = input('Press Enter to finish...')
