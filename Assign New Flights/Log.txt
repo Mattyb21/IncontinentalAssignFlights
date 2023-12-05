@@ -52,3 +52,5 @@
 10:50:15: Beginning Work Order creation
 10:51:30: Attempting to create VH-ALL
 10:51:35: Creating a workorder for VH-ALL
+10:55:06: Attempting to create VH-BBC
+10:55:11: Creating a workorder for VH-BBC
