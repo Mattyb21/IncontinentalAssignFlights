@@ -1,0 +1,28 @@
+12:59:16: Launching OnAir
+12:59:21: Window maximized.
+13:01:12: Onair Prepped and Launched
+13:01:15: Aircraft in operation: 
+13:01:15: ['VH-ERR', 'VH-CON', 'VH-BRK', 'VH-CNT', 'VH-DOM', 'VH-LOL', 'VH-VFJ', 'VH-MZY', 'VH-DWN', 'VH-ZNN', 'VH-ZNM', 'VH-VFI', 'VH-KEG', 'VH-MEL']
+13:02:18: Aircraft Maintenance Complete
+13:02:19: FBO's retrieved
+13:02:19: FBO Query Complete
+13:02:19: Aircraft in need of jobs, beginning FBO Job Query
+13:02:19: Beginning FBO Jobs Query
+13:08:52: FBO Jobs Query Complete
+13:08:52: FBO Job Query Complete
+13:08:52: VH-BMB in maintenance
+13:08:52: VH-ALL in maintenance
+13:08:57: Warning: less than 16 flights have been selected.
+13:08:57: Route created for VH-BBC
+13:08:58: Beginning query search
+13:22:14: Beginning fleet search
+13:22:16: Fleet data retrieved and sorted
+13:22:17: Beginning Work Order creation
+13:23:32: Attempting to create VH-BBC
+13:23:37: Creating a workorder for VH-BBC
+13:26:19: Looking for RJAA -> RJOA | #1n | Eco Pax: 1
+13:26:19: 27
+20:12:46: Looking for RJAA -> YMML | #1 | Eco Pax: 1
+20:12:46: 53
+20:17:29: Refuelling FBO's
+20:19:00: Process complete

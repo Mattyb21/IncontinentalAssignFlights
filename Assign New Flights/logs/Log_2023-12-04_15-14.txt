@@ -1,0 +1,11 @@
+15:09:37: Launching OnAir
+15:09:42: Window maximized.
+15:11:34: Onair Prepped and Launched
+15:11:37: Aircraft in operation: 
+15:11:37: ['VH-ERR', 'VH-CON', 'VH-BRK', 'VH-CNT', 'VH-DOM', 'VH-BBC', 'VH-LOL', 'VH-BMB', 'VH-VFJ', 'VH-MZY', 'VH-DWN', 'VH-ZNN', 'VH-ALL', 'VH-ZNM', 'VH-VFI', 'VH-KEG', 'VH-MEL']
+15:12:29: Aircraft Maintenance Complete
+15:12:31: FBO's retrieved
+15:12:31: FBO Query Complete
+15:12:31: All aircraft in operation, searching for jobs not required
+15:12:32: Refuelling FBO's
+15:14:03: Process complete

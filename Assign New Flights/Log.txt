@@ -1,0 +1,54 @@
+20:59:24: Launching OnAir
+20:59:29: Window maximized.
+21:01:20: Onair Prepped and Launched
+21:01:23: API Request Error (Get Workorders): 'Aircraft'
+21:02:01: Launching OnAir
+21:02:06: Window maximized.
+21:03:57: Onair Prepped and Launched
+21:04:00: API Request Error (Get Workorders): 'Aircraft'
+22:29:31: Launching OnAir
+22:29:36: Window maximized.
+22:31:27: Onair Prepped and Launched
+22:31:30: API Request Error (Get Workorders): 'Aircraft'
+08:45:06: Launching OnAir
+08:45:11: Window maximized.
+08:47:02: Onair Prepped and Launched
+08:47:05: API Request Error (Get Workorders): 'Aircraft'
+10:02:35: Launching OnAir
+10:02:40: Window maximized.
+10:04:31: Onair Prepped and Launched
+10:04:33: API Request Error (Get Workorders): 'Aircraft'
+10:09:02: Launching OnAir
+10:09:07: Window maximized.
+10:10:58: Onair Prepped and Launched
+10:11:01: Aircraft in operation: 
+10:11:01: ['VH-CON', 'VH-BRK', 'VH-DOM', 'VH-LOL', 'VH-DWN', 'VH-ZNN', 'VH-ZNM', 'VH-KEG', 'VH-MEL']
+10:11:28: Doing maintenance on VH-VFI
+10:12:43: Doing maintenance on VH-VFJ
+10:13:58: Doing maintenance on VH-CNT
+10:15:20: Doing maintenance on VH-ERR
+10:16:52: Aircraft Maintenance Complete
+10:16:54: FBO's retrieved
+10:16:54: FBO Query Complete
+10:16:54: Aircraft in need of jobs, beginning FBO Job Query
+10:16:54: Beginning FBO Jobs Query
+10:19:11: FBO Jobs Query Complete
+10:19:11: FBO Job Query Complete
+10:19:11: VH-CNT in maintenance
+10:19:11: A route has been found.
+10:19:13: Route created for VH-MZY
+10:19:13: A route has been found.
+10:19:13: Route created for VH-BMB
+10:19:14: A route has been found.
+10:19:14: Route created for VH-ALL
+10:19:14: VH-ERR in maintenance
+10:19:14: VH-VFI in maintenance
+10:19:14: VH-VFJ in maintenance
+10:19:15: Warning: less than 16 flights have been selected.
+10:19:15: Route created for VH-BBC
+10:19:16: Beginning query search
+10:50:12: Beginning fleet search
+10:50:14: Fleet data retrieved and sorted
+10:50:15: Beginning Work Order creation
+10:51:30: Attempting to create VH-ALL
+10:51:35: Creating a workorder for VH-ALL

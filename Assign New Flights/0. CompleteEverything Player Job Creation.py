@@ -9,6 +9,16 @@ import requests
 import json
 import time
 import pygetwindow as gw
+import shutil
+
+global PlayerJobCreationFile, NoNewJobsFile, CompleteEverythingFile
+
+#************* SETTINGS ***********#
+PlayerJobCreationFile = 1
+NoNewJobsFile = 0
+CompleteEverythingFile = 0
+
+
 
 def filter_human_only(missions, human_only):
     if human_only == 1:
@@ -224,18 +234,20 @@ def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_
     dfs(missions, starting_icao, route_amount, max_Hours)
 
     if len(route) > 0 and route.iloc[-1]['DestinationICAO'] != starting_icao:
-        print('Warning: the final flight does not return to the starting ICAO.')
+        print_with_timestamp('Warning: the final flight does not return to the starting ICAO.')
     elif len(route) < route_amount:
-        print('Warning: less than ' + str(route_amount) + ' flights have been selected.')
+        print_with_timestamp('Warning: less than ' + str(route_amount) + ' flights have been selected.')
     else:
-        print('A route has been found.')
+        print_with_timestamp('A route has been found.')
 
     jobs_take = pd.DataFrame()
     jobs_take = route.copy()
     jobs_take = jobs_take.groupby('Mission ID').first().reset_index()[['FBOId', 'Pay']]
     total_pay = jobs_take['Pay'].sum()
     jobs_take['Pay'] = jobs_take['Pay'].map('{:,.0f}'.format)
+    jobs_take['WorkOrderName'] = workOrderName
     jobs_take = jobs_take.sort_values(by='FBOId', ascending=True)
+    jobs_take['WorkOrderName'] = workOrderName
     
     
     route.to_csv('output.csv', index=False)
@@ -351,12 +363,12 @@ def get_workorders(aircraft_list):
         # Create a list of identifiers of aircraft in work orders
         work_order_aircraft_list = [wo['Aircraft']['Identifier'] for wo in work_order_list]
         
-        print("Aircraft in operation: ")
-        print(work_order_aircraft_list)
+        print_with_timestamp("Aircraft in operation: ")
+        print_with_timestamp(work_order_aircraft_list)
         
         
     except Exception as error:
-        print(f"API Request Error (Get Workorders): {error}")
+        print_with_timestamp(f"API Request Error (Get Workorders): {error}")
 
     # Remove aircraft in work_order_aircraft_list from aircraft_list
     aircraft_list = [ac for ac in aircraft_list if ac not in work_order_aircraft_list]
@@ -387,7 +399,7 @@ def get_workorders(aircraft_list):
         return aircraft_list_with_airports
 
     except Exception as error:
-        print(f"API Request Error: {error}")
+        print_with_timestamp(f"API Request Error: {error}")
 
 def queryFBOJobs():
 
@@ -405,14 +417,14 @@ def queryFBOJobs():
     results = []
     groupedResults = {}
     missions_with_humanonly_true = {}
-    print("Beginning FBO Jobs Query")
+    print_with_timestamp("Beginning FBO Jobs Query")
 
     for fboId in fboIds:
         endpoint = "https://server1.onair.company/api/v1/fbo/" + str(fboId) + "/jobs"
 
         response = requests.get(endpoint, headers=headers)
         statusCode = response.status_code
-        #print(f"Response Status Code for FBO ID {fboId}: {statusCode}")
+        #print_with_timestamp(f"Response Status Code for FBO ID {fboId}: {statusCode}")
 
         if statusCode == 200:
             responseData = response.text
@@ -464,9 +476,9 @@ def queryFBOJobs():
                         row = [mission.get('Id', ""), fboId, departureAirport, departureICAO, destinationAirport, destinationICAO, distance, humanOnly, pay, expirationDate, isLastMinute, descript, *paxClasses, flight.get("Weight", 0)]
                         results.append(row)
             else:
-                print(f"No response data received from the API for FBO ID {fboId}")
+                print_with_timestamp(f"No response data received from the API for FBO ID {fboId}")
         else:
-            print(f"Unexpected API response for FBO ID {fboId}: {statusCode}")
+            print_with_timestamp(f"Unexpected API response for FBO ID {fboId}: {statusCode}")
 
     results_df = pd.DataFrame(results, columns=headers_list)
     
@@ -480,7 +492,7 @@ def queryFBOJobs():
     grouped_df = results_df.groupby(["Mission ID", "FBOId", "DepartureAirport", "DepartureICAO", "DestinationAirport", "DestinationICAO", "Distance", "HumanOnly", "Pay", "Expiration Date", "Is Last Minute", "Descript"]).sum().reset_index()
 
     grouped_df.to_csv('flights.csv', index=False)
-    print("FBO Jobs Query Complete")
+    print_with_timestamp("FBO Jobs Query Complete")
 
 def queryFBOs():
     companyId = "c1069b00-adf0-4f00-b744-4287071e5484"
@@ -509,9 +521,9 @@ def queryFBOs():
 
         # Write the DataFrame to a CSV file
         results_df.to_csv('FBOs.csv', index=False)
-        print("FBO's retrieved")
+        print_with_timestamp("FBO's retrieved")
     except Exception as error:
-        print(f"API Request Error: {error}")
+        print_with_timestamp(f"API Request Error: {error}")
 
 def aircraftmaintenance(aircraft_List):
     # We will insert the aircraft maintenance part here
@@ -543,7 +555,7 @@ def aircraftmaintenance(aircraft_List):
         if ac_maint_line[0] in aircraft_names and 'Needed' not in ac_maint_line[4]:
             # Do maintenance
             # Select Manage
-            print("Doing maintenance on " + ac_maint_line[0])
+            print_with_timestamp("Doing maintenance on " + ac_maint_line[0])
             pyautogui.click(x=720, y=maint_variable)
             time.sleep(1)
             
@@ -553,6 +565,7 @@ def aircraftmaintenance(aircraft_List):
             
             # Select 100h or annual
             if float(ac_maint_line[11]) < 8:
+                print_with_timestamp(ac_maint_line[0] + " requires annual inspection")
                 #Select annual
                 pyautogui.click(x=662, y=800)
                 time.sleep(1)
@@ -612,9 +625,15 @@ def aircraftmaintenance(aircraft_List):
             pyautogui.click(x=3204, y=323)
             time.sleep(2)
 
-            # Pay and start
-            pyautogui.click(x=3124, y=611)
-            time.sleep(40)
+
+            if float(ac_maint_line[11]) < 8:
+                #Select Pay and Start (A bit lower because annual inspection)
+                pyautogui.click(x=3124, y=655)
+                time.sleep(40)
+            else:
+                #Select Pay and Start
+                pyautogui.click(x=3124, y=611)
+                time.sleep(40)
             
             # Sort by 100h
             pyautogui.click(x=1741, y=303)
@@ -651,11 +670,11 @@ def LaunchandPrepOnair():
         if onair_window:
             # Maximize the window
             onair_window.maximize()
-            print("Window maximized.")
+            print_with_timestamp("Window maximized.")
         else:
-            print("Window not found.")
+            print_with_timestamp("Window not found.")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print_with_timestamp(f"An error occurred: {e}")
 
     time.sleep(20)
 
@@ -805,7 +824,7 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
     #31 pixels * listLocation
     load_fuel = 1
     rest_crew = 1
-    print("Creating a workorder for " + workOrderName)
+    print_with_timestamp("Creating a workorder for " + workOrderName)
 
     #Select All Aircraft
     time.sleep(1)
@@ -927,12 +946,12 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
 
         
             while fuckedLoop < 10000:
-                #print("-")
-                #print(currentPayload[1] + " - " + str(len(currentPayload[11])) + " - " + currentPayload[12] + " - " + str(len(currentPayload[13])) + " - " + currentPayload[3][:2] + currentPayload[3][-1:] + " - " + currentPayload[3][:2] + " - " + currentPayload[3][-1:])
+                #print_with_timestamp("-")
+                #print_with_timestamp(currentPayload[1] + " - " + str(len(currentPayload[11])) + " - " + currentPayload[12] + " - " + str(len(currentPayload[13])) + " - " + currentPayload[3][:2] + currentPayload[3][-1:] + " - " + currentPayload[3][:2] + " - " + currentPayload[3][-1:])
                 
                 #Check to see if the current record matches
                 if currentPayload[1] == destination and len(currentPayload[11]) == 0 and currentPayload[12] == 'False' and len(currentPayload[13]) < 4 and descript == currentPayload[3][:2] + currentPayload[3][-1:] or currentPayload[1] == destination and len(currentPayload[11]) == 0 and currentPayload[12] == 'False' and len(currentPayload[13]) < 4 and descript == currentPayload[3][:2] and currentPayload[3][-1:] != "n":
-                #print('currentPayload[12] = ' + str(currentPayload[12]))
+                #print_with_timestamp('currentPayload[12] = ' + str(currentPayload[12]))
             
                     if "Eco" in currentPayload[3] and ecoPaxLoaded == 0:
                         pyautogui.press('tab')
@@ -987,14 +1006,14 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
                 currentPayload = pyperclip.paste().split("\t")
                 fuckedLoop += 1
                 if fuckedLoop == 100:
-                    print('Probably no job available that matches the destination airport')
+                    print_with_timestamp('Probably no job available that matches the destination airport')
                     exit()           
 
             #We should have loaded all the jobs now
             
             if ecoPaxLoaded == 0 or busPaxLoaded == 0 or firstPaxLoaded == 0:
-                print("Looking for " + origin + " -> " + destination + " | " + descript + " | Eco Pax: " + str(ecoPaxLoaded))
-                print(fuckedLoop)
+                print_with_timestamp("Looking for " + origin + " -> " + destination + " | " + descript + " | Eco Pax: " + str(ecoPaxLoaded))
+                print_with_timestamp(fuckedLoop)
                 aaaaa = input('Good chance job is fucked, we missed some pax - hit enter to proceed')
                 pyautogui.click(x=1000, y=10)
 
@@ -1034,15 +1053,15 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
             #Set whether crew sleep
             # Divide the flight distance by the speed and then add 36 minutes of mucking about
             hoursWorked += (distance / knots) + 0.6
-            #print('Current hours worked:' + str(round(hoursWorked, 1)))
+            #print_with_timestamp('Current hours worked:' + str(round(hoursWorked, 1)))
 
             
             if i+1 < len(lines):
                 # get the distance for the next job
                 next_distance = int(round(float(lines[i+1].strip().split(',')[4])))
                 next_hours = (next_distance / knots) + 0.6
-                #print('Next flight hours: ' + str(next_hours))
-                #print('Predicted next flight hours: ' + str(next_hours + hoursWorked))
+                #print_with_timestamp('Next flight hours: ' + str(next_hours))
+                #print_with_timestamp('Predicted next flight hours: ' + str(next_hours + hoursWorked))
             else:
                 next_hours = 14 #To force a crew rest before starting the new work order.
 
@@ -1071,17 +1090,17 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
     pyautogui.press('enter')
     pyautogui.sleep(1)
 
-if PlayerJobCreationFile == 0:
-    #Select Activate
-    pyautogui.click(x=3465, y=228)
-    pyautogui.sleep(10)
-else:
-    #Select Save
-    pyautogui.click(x=3465, y=228)
-    pyautogui.click(x=3639, y=228)
-    pyautogui.sleep(10)
-    #Select Back
-    pyautogui.click(x=25, y=117)
+    if PlayerJobCreationFile == 0:
+        #Select Activate
+        pyautogui.click(x=3465, y=228)
+        pyautogui.sleep(10)
+    else:
+        #Select Save
+        pyautogui.click(x=3465, y=228)
+        pyautogui.click(x=3639, y=228)
+        pyautogui.sleep(10)
+        #Select Back
+        pyautogui.click(x=25, y=117)
 
 def workOrder_controller():
     #We will make all the workorders from here, because it's stupid how hard it is to make :(
@@ -1114,7 +1133,7 @@ def workOrder_controller():
         
         # Call createworkorder for each matching row
         for index, row in matching_rows.iterrows():
-            print("Attempting to create " + row['Identifier'])
+            print_with_timestamp("Attempting to create " + row['Identifier'])
             #Click add work order
             pyautogui.click(x=1220, y=174)
             time.sleep(5)
@@ -1153,7 +1172,7 @@ def queryFleet():
 
         # Write the DataFrame to a CSV file
         results_df.to_csv('Fleet.csv', index=False)
-        print("Fleet data retrieved and sorted")
+        print_with_timestamp("Fleet data retrieved and sorted")
     except Exception as error:
         print(f"API Request Error: {error}")
 
@@ -1189,12 +1208,19 @@ def find_aircraft_type(identifier):
         aaaaa = input("Please recheck the aircraft identifier: ")
         return "Aircraft not found in fleet"    
 
-global PlayerJobCreationFile, NoNewJobsFile, CompleteEverythingFile
+def print_with_timestamp(message):
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+    log_message = f"{timestamp}: {message}"
+    
+    # Print to console
+    print(log_message)
 
-#************* SETTINGS ***********#
-PlayerJobCreationFile = 1
-NoNewJobsFile = 0
-CompleteEverythingFile = 0
+    # Log file path (in the same directory)
+    log_file_path = 'Log.txt'
+
+    # Write to log file
+    with open(log_file_path, "a") as log_file:
+        log_file.write(log_message + "\n")
 
 if PlayerJobCreationFile == 1:
     player_selected_aircraft = input("Enter the registration of the aircraft you're flying: ").upper()
@@ -1203,19 +1229,31 @@ if PlayerJobCreationFile == 1:
     playerMixup = int(input("Type 1 to enable player mixup: "))
 
 
-
+print_with_timestamp("Launching OnAir")
 
 pyautogui.PAUSE = 0
 LaunchandPrepOnair()
-print("Onair Prepped and Launched")
+print_with_timestamp("Onair Prepped and Launched")
 
 if os.path.exists('JobsToTake.csv'):
-    os.remove('JobsToTake.csv')
+    # Get the current date for the datestamp
+    datestamp = datetime.now().strftime("%Y%m%d")
+    new_file_name = f"JobsToTake_{datestamp}.csv"
+
+    # Move and rename the file
+    shutil.move('JobsToTake.csv', os.path.join('jobshistory', new_file_name))
 
     file_list = os.listdir()
     for file_name in file_list:
-        if 'workorder_' in file_name:
-            os.remove(file_name)
+        if file_name.startswith('workorder_'):
+            # Generate a datestamp
+            datestamp = datetime.now().strftime("%Y%m%d")
+            
+            # Create a new filename with the datestamp
+            new_file_name = f"{file_name.split('.')[0]}_{datestamp}.{file_name.split('.')[-1]}"
+            
+            # Move the file to workorderhistory folder with the new name
+            shutil.move(file_name, os.path.join('workorderhistory', new_file_name))
 
 
 aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
@@ -1224,12 +1262,12 @@ aircraft_List = get_workorders(aircraft_List)
 
 
 aircraftmaintenance(aircraft_List)
-print("Aircraft Maintenance Complete")
+print_with_timestamp("Aircraft Maintenance Complete")
 
 
 #Query FBO's and Jobs
 queryFBOs()
-print("FBO Query Complete")
+print_with_timestamp("FBO Query Complete")
 
 
 checkForQueries = 0
@@ -1244,9 +1282,12 @@ if PlayerJobCreationFile == 0: #We are just running the below if it's not for a 
             if hours_before_inspection >= 35 :
                 checkForQueries = 1
 
-    if checkForQueries = 1:
+    if checkForQueries == 1:
+        print_with_timestamp("Aircraft in need of jobs, beginning FBO Job Query")
         queryFBOJobs()
-        print("FBO Job Query Complete")
+        print_with_timestamp("FBO Job Query Complete")
+    else:
+        print_with_timestamp("All aircraft in operation, searching for jobs not required")
 
     for aircraft_info in aircraft_List:
         hours_before_inspection = aircraft_info['HoursBefore100HInspection']
@@ -1261,9 +1302,9 @@ if PlayerJobCreationFile == 0: #We are just running the below if it's not for a 
             
             if hours_before_inspection >= 35:  # Aircraft doesn't need maintenance
                 automation_flights(aircraft_info['Airport'], aircraft_info['DisplayName'], preset, aircraft_info['Aircraft'], 0)
-                print("Route created for " + aircraft_info['Aircraft'])
+                print_with_timestamp("Route created for " + aircraft_info['Aircraft'])
             else:
-                print(aircraft_info['Aircraft'] + " in maintenance")
+                print_with_timestamp(aircraft_info['Aircraft'] + " in maintenance")
 else:
     queryFBOJobs()
     queryFleet()
@@ -1274,6 +1315,7 @@ file_name_jobs = 'JobsToTake.csv'
 
 time.sleep(1)
 if os.path.exists(file_name_jobs):
+    print_with_timestamp("Beginning query search")
     take_queries()
     time.sleep(1)
     #Click to get rid of the dialog box
@@ -1282,12 +1324,31 @@ if os.path.exists(file_name_jobs):
 
 if os.path.exists(file_name_jobs):
     time.sleep(1)
+    print_with_timestamp("Beginning fleet search")
     queryFleet()
     time.sleep(1)
+    print_with_timestamp("Beginning Work Order creation")
     workOrder_controller()
 
 if PlayerJobCreationFile == 0:
+    print_with_timestamp("Refuelling FBO's")
     RefuelFBOs()
+
+print_with_timestamp("Process complete")
+time.sleep(2)
+
+timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+# Define the old and new file paths
+old_file_path = 'Log.txt'
+new_file_name = f"Log_{timestamp}.txt"
+new_file_path = os.path.join('logs', new_file_name)
+
+# Ensure the 'logs' directory exists
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+
+# Move and rename the log file
+shutil.move(old_file_path, new_file_path)
 
 
 aaaaa = input('Press Enter to finish...')
