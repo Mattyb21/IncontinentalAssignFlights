@@ -54,3 +54,14 @@
 10:51:35: Creating a workorder for VH-ALL
 10:55:06: Attempting to create VH-BBC
 10:55:11: Creating a workorder for VH-BBC
+10:56:57: Attempting to create VH-BMB
+10:57:02: Creating a workorder for VH-BMB
+11:00:13: Attempting to create VH-MZY
+11:00:18: Creating a workorder for VH-MZY
+11:00:35: Looking for YBBN -> YMHB | #1 | Eco Pax: 0
+11:00:35: 11
+11:05:21: Looking for YMHB -> YPAD | #2n | Eco Pax: 0
+11:05:21: 4
+11:25:13: ****** Running AI Job File ******
+11:25:13: Launching OnAir
+11:25:18: Window maximized.

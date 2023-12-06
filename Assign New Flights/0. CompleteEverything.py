@@ -1226,41 +1226,49 @@ if PlayerJobCreationFile == 1:
     player_starting_airport = input("Enter the ICAO of the airport you are starting at, e.g. YSSY: ").upper()
     playerMixup = int(input("Type 1 to enable player mixup: "))
 
+if PlayerJobCreationFile == 1:
+    print_with_timestamp("****** Running Player Job Creation File ******")
+
+if NoNewJobsFile == 1:
+    print_with_timestamp("****** Running Job Retry File ******")
+
+if CompleteEverythingFile == 1:
+    print_with_timestamp("****** Running AI Job File ******")
 
 print_with_timestamp("Launching OnAir")
-
-pyautogui.PAUSE = 0
 LaunchandPrepOnair()
 print_with_timestamp("Onair Prepped and Launched")
 
-if os.path.exists('JobsToTake.csv'):
-    # Get the current date for the datestamp
-    datestamp = datetime.now().strftime("%Y%m%d")
-    new_file_name = f"JobsToTake_{datestamp}.csv"
 
-    # Move and rename the file
-    shutil.move('JobsToTake.csv', os.path.join('jobshistory', new_file_name))
+if NoNewJobsFile == 0:
+    if os.path.exists('JobsToTake.csv'):
+        # Get the current date for the datestamp
+        datestamp = datetime.now().strftime("%Y%m%d")
+        new_file_name = f"JobsToTake_{datestamp}.csv"
 
-    file_list = os.listdir()
-    for file_name in file_list:
-        if file_name.startswith('workorder_'):
-            # Generate a datestamp
-            datestamp = datetime.now().strftime("%Y%m%d")
-            
-            # Create a new filename with the datestamp
-            new_file_name = f"{file_name.split('.')[0]}_{datestamp}.{file_name.split('.')[-1]}"
-            
-            # Move the file to workorderhistory folder with the new name
-            shutil.move(file_name, os.path.join('workorderhistory', new_file_name))
+        # Move and rename the file
+        shutil.move('JobsToTake.csv', os.path.join('jobshistory', new_file_name))
+
+        file_list = os.listdir()
+        for file_name in file_list:
+            if file_name.startswith('workorder_'):
+                # Generate a datestamp
+                datestamp = datetime.now().strftime("%Y%m%d")
+                
+                # Create a new filename with the datestamp
+                new_file_name = f"{file_name.split('.')[0]}_{datestamp}.{file_name.split('.')[-1]}"
+                
+                # Move the file to workorderhistory folder with the new name
+                shutil.move(file_name, os.path.join('workorderhistory', new_file_name))
 
 
 aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
 aircraft_List = aircraftInOperation['Aircraft'].tolist()
 aircraft_List = get_workorders(aircraft_List)
 
-
-aircraftmaintenance(aircraft_List)
-print_with_timestamp("Aircraft Maintenance Complete")
+if NoNewJobsFile == 0:
+    aircraftmaintenance(aircraft_List)
+    print_with_timestamp("Aircraft Maintenance Complete")
 
 
 #Query FBO's and Jobs
@@ -1271,7 +1279,7 @@ print_with_timestamp("FBO Query Complete")
 checkForQueries = 0
 
 
-if PlayerJobCreationFile == 0: #We are just running the below if it's not for a player
+if CompleteEverythingFile == 1: #We are just running the below if it's not for a player
     #We will check if we need to check the queries
     for aircraft_info in aircraft_List:
         hours_before_inspection = aircraft_info['HoursBefore100HInspection']
@@ -1303,7 +1311,8 @@ if PlayerJobCreationFile == 0: #We are just running the below if it's not for a 
                 print_with_timestamp("Route created for " + aircraft_info['Aircraft'])
             else:
                 print_with_timestamp(aircraft_info['Aircraft'] + " in maintenance")
-else:
+
+if PlayerJobCreationFile == 1:
     queryFBOJobs()
     queryFleet()
     automation_flights(player_starting_airport, find_aircraft_type(player_selected_aircraft), player_flight_amount, player_selected_aircraft, playerMixup)
@@ -1312,13 +1321,14 @@ else:
 file_name_jobs = 'JobsToTake.csv'
 
 time.sleep(1)
-if os.path.exists(file_name_jobs):
+
+
+if os.path.exists(file_name_jobs) and NoNewJobsFile == 0:
     print_with_timestamp("Beginning query search")
     take_queries()
     time.sleep(1)
     #Click to get rid of the dialog box
     pyautogui.click(x=1394, y=20)
-    
 
 if os.path.exists(file_name_jobs):
     time.sleep(1)
