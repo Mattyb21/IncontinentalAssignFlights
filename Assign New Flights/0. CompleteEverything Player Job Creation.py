@@ -17,8 +17,7 @@ global PlayerJobCreationFile, NoNewJobsFile, CompleteEverythingFile
 PlayerJobCreationFile = 1
 NoNewJobsFile = 0
 CompleteEverythingFile = 0
-
-
+#************* SETTINGS ***********#
 
 def filter_human_only(missions, human_only):
     if human_only == 1:
@@ -248,7 +247,7 @@ def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_
     jobs_take['WorkOrderName'] = workOrderName
     jobs_take = jobs_take.sort_values(by='FBOId', ascending=True)
     jobs_take['WorkOrderName'] = workOrderName
-    
+    jobs_take['MissionIDShort'] = jobs_take['Mission ID'].str[:5]
     
     route.to_csv('output.csv', index=False)
     #workOrderName = input('Please type the aircraft name: ').upper()
@@ -1245,7 +1244,7 @@ print_with_timestamp("Onair Prepped and Launched")
 if NoNewJobsFile == 0:
     if os.path.exists('JobsToTake.csv'):
         # Get the current date for the datestamp
-        datestamp = datetime.now().strftime("%Y%m%d")
+        datestamp = datetime.datetime.now().strftime("%Y-%m-%d")
         new_file_name = f"JobsToTake_{datestamp}.csv"
 
         # Move and rename the file
@@ -1255,7 +1254,7 @@ if NoNewJobsFile == 0:
         for file_name in file_list:
             if file_name.startswith('workorder_'):
                 # Generate a datestamp
-                datestamp = datetime.now().strftime("%Y%m%d")
+                datestamp = datetime.datetime.now().strftime("%Y%m%d")
                 
                 # Create a new filename with the datestamp
                 new_file_name = f"{file_name.split('.')[0]}_{datestamp}.{file_name.split('.')[-1]}"
