@@ -19,6 +19,7 @@ NoNewJobsFile = 1
 CompleteEverythingFile = 0
 #************* SETTINGS ***********#
 
+
 def filter_human_only(missions, human_only):
     if human_only == 1:
         missions = missions.groupby('Mission ID').filter(lambda x: (~x['HumanOnly']).all())
@@ -232,12 +233,12 @@ def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_
     work_order = pd.DataFrame(columns=['Order', 'Mission ID', 'DepartureICAO', 'DestinationICAO', 'Distance', 'Descript'])
     dfs(missions, starting_icao, route_amount, max_Hours)
 
-    if len(route) > 0 and route.iloc[-1]['DestinationICAO'] != starting_icao:
-        print_with_timestamp('Warning: the final flight does not return to the starting ICAO.')
-    elif len(route) < route_amount:
-        print_with_timestamp('Warning: less than ' + str(route_amount) + ' flights have been selected.')
-    else:
-        print_with_timestamp('A route has been found.')
+    #if len(route) > 0 and route.iloc[-1]['DestinationICAO'] != starting_icao:
+    #    print_with_timestamp('Warning: the final flight does not return to the starting ICAO.')
+    #elif len(route) < route_amount:
+    #    print_with_timestamp('Warning: less than ' + str(route_amount) + ' flights have been selected.')
+    #else:
+    #    print_with_timestamp('A route has been found.')
 
     jobs_take = pd.DataFrame()
     jobs_take = route.copy()
@@ -247,8 +248,7 @@ def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_
     jobs_take['WorkOrderName'] = workOrderName
     jobs_take = jobs_take.sort_values(by='FBOId', ascending=True)
     jobs_take['WorkOrderName'] = workOrderName
-    jobs_take['MissionIDShort'] = jobs_take['Mission ID'].str[:5]
-    
+
     route.to_csv('output.csv', index=False)
     #workOrderName = input('Please type the aircraft name: ').upper()
 
@@ -617,7 +617,7 @@ def aircraftmaintenance(aircraft_List):
                 time.sleep(1)
             
             if ac_maint_line[3] == "YBBN":
-                pyautogui.click(x=2790, y=440)
+                pyautogui.click(x=2790, y=400)
                 time.sleep(1)
             
             # Get quote
@@ -692,7 +692,9 @@ def LaunchandPrepOnair():
     #Real wake up call that onair is slow as fuck
 
     #Click Aircaft Selection
-    pyautogui.click(x=1820, y=63)
+    #pyautogui.click(x=1820, y=63)
+    #Doing this through hotkey now
+    pyautogui.hotkey('alt', 'a')
     time.sleep(15)
 
 def take_queries():
@@ -700,7 +702,8 @@ def take_queries():
 
     #Navigate to the queries page
     time.sleep(1)
-    pyautogui.click(x=1931, y=66)
+    #Hotkeying to the pending page
+    pyautogui.hotkey('alt', 'p')
     time.sleep(20)
     
     #Navigate to the FBO queries page
@@ -827,11 +830,11 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
 
     #Select All Aircraft
     time.sleep(1)
-    pyautogui.click(x=287, y=231)
+    pyautogui.click(x=259, y=329)
     time.sleep(1)
 
     #Select Top Aircraft
-    pyautogui.click(x=315, y=318)
+    pyautogui.click(x=229, y=402)
     time.sleep(1)
     
     #Select the right plane, starting at the first one, 30 pixels between each one
@@ -846,10 +849,11 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
     
     
     #Select Copy Crew
-    pyautogui.click(x=1956, y=281)
+    pyautogui.click(x=456, y=1185)
     time.sleep(1)
     
-    pyautogui.doubleClick(x=200, y=282)
+    #Select Work Order Name
+    pyautogui.doubleClick(x=49, y=180)
     pyautogui.sleep(0.5)
     pyautogui.hotkey('ctrl', 'c')
     pyautogui.sleep(1.5)
@@ -881,25 +885,34 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
             descript = fields[5]
             
             
-            #Entering original departure
+            #Entering original departure, do one off tasks
             if original_departure == 0:
-                pyautogui.click(x=213, y=369)
+                pyautogui.click(x=87, y=417)
                 time.sleep(0.5)
                 pyautogui.hotkey('ctrl', 'a')
                 time.sleep(0.5)
                 pyautogui.write(origin)
                 time.sleep(0.5)
+                #Select Legs
+                pyautogui.click(x=385, y=236)
+                time.sleep(1)
+                #Delete Grouped By
+                pyautogui.click(x=852, y=761)
+                time.sleep(0.5)
+                
                 original_departure = 1
             
-            
             #Enter the dest icao
-            pyautogui.click(x=736, y=474)
+            pyautogui.click(x=619, y=346)
             pyautogui.sleep(0.2)
             pyautogui.write(destination)
             
+            
+            
+            
             #Starting line for first payload. We add 33 for each payload we go down        
 
-            pyautogui.click(x=978, y=875)
+            pyautogui.click(x=1079, y=835)
             pyautogui.sleep(0.2)
             
             pyautogui.hotkey('ctrl', 'c')
@@ -1035,18 +1048,18 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
                 knots = 488
 
             #Set Fuel
-            if load_fuel == 1:
+            # if load_fuel == 1:
                             
-                #The formula for A320 we use is ((Distance / Knots) * Fuel Flow Per hour) + Fuel flow per hour, with the addition being 1 hour of reserve.    
-                fuel = round(((distance / knots) * ffph) + ffph)
+                # #The formula for A320 we use is ((Distance / Knots) * Fuel Flow Per hour) + Fuel flow per hour, with the addition being 1 hour of reserve.    
+                # fuel = round(((distance / knots) * ffph) + ffph)
                 
-                pyautogui.click(x=1246, y=519)
-                pyautogui.sleep(0.1)
-                pyautogui.write(str(fuel))
-                pyautogui.sleep(0.1)
-            else:
-                #Select don't load fuel
-                pyautogui.click(x=600, y=554)
+                # pyautogui.click(x=1246, y=519)
+                # pyautogui.sleep(0.1)
+                # pyautogui.write(str(fuel))
+                # pyautogui.sleep(0.1)
+            # else:
+                # #Select don't load fuel
+                # pyautogui.click(x=600, y=554)
             
             
             #Set whether crew sleep
@@ -1066,7 +1079,7 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
 
             if hoursWorked + next_hours > 13 and rest_crew == 1:
                 hoursWorked = 0
-                pyautogui.click(x=1917, y=550)
+                pyautogui.click(x=702, y=313)
 
 
 
@@ -1076,30 +1089,29 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
             #    pyautogui.click(x=1917, y=550)
 
             #Add a new leg
-            pyautogui.click(x=130, y=463)
+            pyautogui.click(x=121, y=285)
             pyautogui.sleep(0.2)
 
     #Select Delete Leg
-    pyautogui.click(x=263, y=466)
-    pyautogui.sleep(3)
+    pyautogui.click(x=242, y=286)
+    pyautogui.sleep(1)
 
     #Select box
-    pyautogui.click(x=1960, y=1134)
+    pyautogui.click(x=1954, y=1140)
     pyautogui.sleep(2)
     pyautogui.press('enter')
     pyautogui.sleep(1)
 
     if PlayerJobCreationFile == 0:
         #Select Activate
-        pyautogui.click(x=3465, y=228)
+        pyautogui.click(x=3464, y=237)
         pyautogui.sleep(10)
     else:
         #Select Save
-        pyautogui.click(x=3465, y=228)
-        pyautogui.click(x=3639, y=228)
+        pyautogui.click(x=3630, y=229)
         pyautogui.sleep(10)
         #Select Back
-        pyautogui.click(x=25, y=117)
+        pyautogui.click(x=30, y=118)
 
 def workOrder_controller():
     #We will make all the workorders from here, because it's stupid how hard it is to make :(
@@ -1108,15 +1120,17 @@ def workOrder_controller():
     
     time.sleep(30)
     
-    pyautogui.click(x=150, y=70)
-    time.sleep(5)
+    
+    #pyautogui.click(x=150, y=70)
+    #time.sleep(5)
     
     #Click the menu
-    pyautogui.click(x=150, y=290)
-    time.sleep(40)
+    #pyautogui.click(x=150, y=290)
+    #time.sleep(40)
     #waiting for onair to load the workorder page
     
-    
+    #Hotkey to get to work orders
+    pyautogui.hotkey('alt', 'w')
     
     #build aircraft list
     fleetList = [file for file in os.listdir('.') if file.startswith('workorder_')]
@@ -1244,7 +1258,7 @@ print_with_timestamp("Onair Prepped and Launched")
 if NoNewJobsFile == 0:
     if os.path.exists('JobsToTake.csv'):
         # Get the current date for the datestamp
-        datestamp = datetime.datetime.now().strftime("%Y-%m-%d")
+        datestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
         new_file_name = f"JobsToTake_{datestamp}.csv"
 
         # Move and rename the file
@@ -1254,7 +1268,7 @@ if NoNewJobsFile == 0:
         for file_name in file_list:
             if file_name.startswith('workorder_'):
                 # Generate a datestamp
-                datestamp = datetime.datetime.now().strftime("%Y%m%d")
+                datestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
                 
                 # Create a new filename with the datestamp
                 new_file_name = f"{file_name.split('.')[0]}_{datestamp}.{file_name.split('.')[-1]}"
@@ -1358,6 +1372,27 @@ if not os.path.exists('logs'):
 
 # Move and rename the log file
 shutil.move(old_file_path, new_file_path)
+
+
+if os.path.exists('JobsToTake.csv'):
+    # Get the current date for the datestamp
+    datestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+    new_file_name = f"JobsToTake_{datestamp}.csv"
+
+    # Move and rename the file
+    shutil.move('JobsToTake.csv', os.path.join('jobshistory', new_file_name))
+
+    file_list = os.listdir()
+    for file_name in file_list:
+        if file_name.startswith('workorder_'):
+            # Generate a datestamp
+            datestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+            
+            # Create a new filename with the datestamp
+            new_file_name = f"{file_name.split('.')[0]}_{datestamp}.{file_name.split('.')[-1]}"
+            
+            # Move the file to workorderhistory folder with the new name
+            shutil.move(file_name, os.path.join('workorderhistory', new_file_name))
 
 
 aaaaa = input('Press Enter to finish...')
