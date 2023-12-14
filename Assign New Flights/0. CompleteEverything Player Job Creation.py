@@ -742,8 +742,16 @@ def take_queries():
             pyautogui.sleep(1)
             pyautogui.press('enter')
 
+            jobs_Amount = 0
+            jobs_Amount_Taken = 0
+            # Check each row in JobsToTake.csv to see if the FBO matches
+            for job_index, job_row in jobs_df.iterrows():
+                if job_row.iloc[0] == FBOs:
+                    jobs_Amount += 1
+
+            print_with_timestamp("Searching " + FBOs + " for " + str(jobs_Amount) + " jobs.")
             #Wait ages for it to load
-            pyautogui.sleep(60)
+            pyautogui.sleep(57)
 
             #Sel cargo field
             pyautogui.click(x=662, y=464)
@@ -787,6 +795,7 @@ def take_queries():
 
                         #Enter to take job
                         pyautogui.press('enter')
+                        jobs_Amount_Taken += 1
                         #Long sleep for load screen
                         pyautogui.sleep(5)
 
@@ -804,7 +813,8 @@ def take_queries():
                 pyautogui.hotkey('ctrl', 'c')
                 pyautogui.sleep(1.5)
 
-                if pyperclip.paste().split("\t") == current_job:
+                #If there's no more jobs or if the amount of jobs we are expecting to see is done
+                if pyperclip.paste().split("\t") == current_job or jobs_Amount_Taken == jobs_Amount:
                     #There's probably no more jobs, time to move to the next job
                     #selecting FBO box
                     pyautogui.click(x=243, y=300)
@@ -1131,6 +1141,7 @@ def workOrder_controller():
     
     #Hotkey to get to work orders
     pyautogui.hotkey('alt', 'w')
+    time.sleep(40)
     
     #build aircraft list
     fleetList = [file for file in os.listdir('.') if file.startswith('workorder_')]
