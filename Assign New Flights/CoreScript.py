@@ -813,12 +813,15 @@ def take_queries():
                 pyautogui.hotkey('ctrl', 'c')
                 pyautogui.sleep(1.5)
 
-                #If there's no more jobs or if the amount of jobs we are expecting to see is done
-                if pyperclip.paste().split("\t") == current_job or jobs_Amount_Taken == jobs_Amount:
-                    #There's probably no more jobs, time to move to the next job
-                    #selecting FBO box
+                if jobs_Amount_Taken == jobs_Amount:
                     pyautogui.click(x=243, y=300)
                     pyautogui.sleep(0.5)
+                    break
+
+                #If there's no more jobs or if the amount of jobs we are expecting to see is done
+                if pyperclip.paste().split("\t") == current_job:
+                    print("Looking for " + jobs_Amount + ", can only find " + jobs_Amount_Taken)
+                    aaaaaaa = input("Possibly can't find a job, seems we are at the end of the list")
                     break
 
                 current_job = pyperclip.paste().split("\t")
