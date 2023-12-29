@@ -11,10 +11,11 @@ import time
 import pygetwindow as gw
 import shutil
 
+
 #************* SETTINGS ***********#
-PlayerJobCreationFile = 0
-NoNewJobsFile = 1
-CompleteEverythingFile = 0
+PlayerJobCreationFile = '0'
+NoNewJobsFile = '1'
+CompleteEverythingFile = '0'
 #************* SETTINGS ***********#
 
 script_path = 'CoreScript.py'

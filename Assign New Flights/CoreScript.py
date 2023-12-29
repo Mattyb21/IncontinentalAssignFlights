@@ -11,6 +11,8 @@ import time
 import pygetwindow as gw
 import shutil
 import sys
+import pytesseract
+from PIL import Image
 
 global PlayerJobCreationFile, NoNewJobsFile, CompleteEverythingFile
 
@@ -18,7 +20,41 @@ global PlayerJobCreationFile, NoNewJobsFile, CompleteEverythingFile
 PlayerJobCreationFile = int(sys.argv[1])
 NoNewJobsFile = int(sys.argv[2])
 CompleteEverythingFile = int(sys.argv[3])
+
+# Set the path to the tesseract executable
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Change this to your Tesseract path
+
 #************* SETTINGS ***********#
+
+
+def find_second_occurrence_of_word(word):
+    # Take a screenshot
+    screenshot = pyautogui.screenshot()
+
+    # Use OCR to find text in the screenshot
+    text_data = pytesseract.image_to_data(screenshot, output_type=pytesseract.Output.DICT)
+
+    occurrence_count = 0  # Counter for the occurrences of the word
+
+    # Look for the word in the OCR results
+    for i in range(len(text_data['text'])):
+        if text_data['text'][i].lower() == word.lower():
+            occurrence_count += 1
+            if occurrence_count == 2:  # Check if it's the second occurrence
+                # Extract coordinates of the word
+                x = text_data['left'][i]
+                y = text_data['top'][i]
+                return x, y
+
+    return None
+
+def click_second_occurrence(word):
+    coords = find_second_occurrence_of_word(word)
+    if coords:
+        # Move the mouse to the second occurrence of the word and click
+        pyautogui.click(coords[0], coords[1])
+    else:
+        print(f"Second occurrence of '{word}' not found on screen.")
 
 def filter_human_only(missions, human_only):
     if human_only == 1:
@@ -356,7 +392,7 @@ def get_workorders(aircraft_list):
         work_order_list = data.get('Content', [])
 
         # Filter work orders that contain "CREW" in the aircraft identifier
-        work_order_list = [wo for wo in work_order_list if 'CREW' not in wo['Name']]
+        work_order_list = [wo for wo in work_order_list if 'CREW' not in wo['Name'] and 'Work Order' not in wo['Name']]
         #work_order_list = [wo for wo in work_order_list if wo['Status'] == 1]
 
         # Create a list of identifiers of aircraft in work orders
@@ -607,23 +643,12 @@ def aircraftmaintenance(aircraft_List):
             pyautogui.click(x=2790, y=326)
             time.sleep(1)
             
-            # YMML - Only one FBO
-            if ac_maint_line[3] == "YMML":
-                pyautogui.click(x=2790, y=360)
-                time.sleep(1)
-            
-            if ac_maint_line[3] == "YSSY":
-                pyautogui.click(x=2790, y=440)
-                time.sleep(1)
-            
-            if ac_maint_line[3] == "YBBN":
-                pyautogui.click(x=2790, y=400)
-                time.sleep(1)
-            
+            # Use image recog to find it
+            click_second_occurrence('INCOZ')
+
             # Get quote
             pyautogui.click(x=3204, y=323)
             time.sleep(2)
-
 
             if float(ac_maint_line[11]) < 8:
                 #Select Pay and Start (A bit lower because annual inspection)
@@ -658,7 +683,7 @@ def LaunchandPrepOnair():
     subprocess.Popen(f'cmd /c start "" "{onair_appref_ms_path}"', shell=True)
 
     # Wait for a moment to allow the application to start
-    time.sleep(5)
+    time.sleep(10)
 
     # Try to find the window
     try:
@@ -680,7 +705,7 @@ def LaunchandPrepOnair():
 
     #Click Resume
     pyautogui.click(x=2231, y=1573)
-    time.sleep(25)
+    time.sleep(45)
 
     #Click VA Ops
     pyautogui.click(x=627, y=55)
@@ -688,14 +713,31 @@ def LaunchandPrepOnair():
 
     #Click VA
     pyautogui.click(x=627, y=175)
-    time.sleep(50)
+    time.sleep(45)
     #Real wake up call that onair is slow as fuck
 
+# Try to find the window
+    try:
+        # You need to know the title of the window to find it
+        window_title = "OnAir VA Management Console" 
+        onair_window = gw.getWindowsWithTitle(window_title)[0]  # Get the first window with the title
+
+        if onair_window:
+            # Maximize the window
+            onair_window.maximize()
+            print_with_timestamp("Window maximized.")
+        else:
+            print_with_timestamp("Window not found.")
+    except Exception as e:
+        print_with_timestamp(f"An error occurred: {e}")
+
+    time.sleep(1)
+    
     #Click Aircaft Selection
     #pyautogui.click(x=1820, y=63)
     #Doing this through hotkey now
     pyautogui.hotkey('alt', 'a')
-    time.sleep(15)
+    time.sleep(25)
 
 def take_queries():
 
@@ -862,7 +904,7 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
     
     
     #Select Copy Crew
-    pyautogui.click(x=456, y=1185)
+    pyautogui.click(x=462, y=1216)
     time.sleep(1)
     
     #Select Work Order Name
@@ -1130,7 +1172,8 @@ def workOrder_controller():
     
     #Navigate to the workorder page
     
-    time.sleep(30)
+    #Extended time on this to allow whatever shit keeps fucking up
+    time.sleep(50)
     
     
     #pyautogui.click(x=150, y=70)
@@ -1159,6 +1202,10 @@ def workOrder_controller():
         
         # Call createworkorder for each matching row
         for index, row in matching_rows.iterrows():
+            #Refresh the page
+            pyautogui.click(x=309, y=116)
+            time.sleep(40)
+            
             print_with_timestamp("Attempting to create " + row['Identifier'])
             #Click add work order
             pyautogui.click(x=1220, y=174)
