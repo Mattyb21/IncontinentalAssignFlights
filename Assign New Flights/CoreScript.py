@@ -280,7 +280,7 @@ def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_
     jobs_take = route.copy()
     jobs_take = jobs_take.groupby('Mission ID').first().reset_index()[['FBOId', 'Pay']]
     total_pay = jobs_take['Pay'].sum()
-    jobs_take['Pay'] = jobs_take['Pay'].map('{:,.0f}'.format)
+    jobs_take['Pay'] = jobs_take['Pay'].map('{:,.2f}'.format)
     jobs_take['WorkOrderName'] = workOrderName
     jobs_take = jobs_take.sort_values(by='FBOId', ascending=True)
     jobs_take['WorkOrderName'] = workOrderName
@@ -739,8 +739,29 @@ def LaunchandPrepOnair():
     pyautogui.hotkey('alt', 'a')
     time.sleep(25)
 
-def take_queries():
+def screenshot_fbo_job(word):
+    # Take a screenshot
+    screenshot = pyautogui.screenshot()
 
+    # Use OCR to find text in the screenshot
+    text_data = pytesseract.image_to_data(screenshot, output_type=pytesseract.Output.DICT)
+
+    occurrence_count = 0  # Counter for the occurrences of the word
+
+    # Look for the word in the OCR results
+    for i in range(len(text_data['text'])):
+        if text_data['text'][i].lower() == word.lower():
+            occurrence_count += 1
+            if occurrence_count == 1:
+                # Extract coordinates of the word
+                x = text_data['left'][i]
+                y = text_data['top'][i]
+                return y
+    
+    y = 0
+    return y
+
+def take_queries():
 
     #Navigate to the queries page
     time.sleep(1)
@@ -793,82 +814,38 @@ def take_queries():
 
             print_with_timestamp("Searching " + FBOs + " for " + str(jobs_Amount) + " jobs.")
             #Wait ages for it to load
-            pyautogui.sleep(57)
+            pyautogui.sleep(60)
+            
+            #We are going to do some image reco shit
 
-            #Sel cargo field
-            pyautogui.click(x=662, y=464)
-            pyautogui.sleep(1)
-
-            #Copy the row
-            pyautogui.hotkey('ctrl', 'c')
-            pyautogui.sleep(1.5)
-
-            current_job = pyperclip.paste().split("\t")
-
+            #the X value of the take button
+            
             fuckedLoop = 0
 
             while fuckedLoop < 300:
-
                 for job_index, job_row in jobs_df.iterrows():
-                    if job_row.iloc[0] == FBOs and abs(float(job_row.iloc[1].replace(',', '')) - float(current_job[16].replace(',', ''))) <= 1:
-                        #We do the action here to take the job
-                        #Headed left to the take button
-                        pyautogui.press('left')
-                        pyautogui.sleep(0.5)
-
-                        pyautogui.press('left')
-                        pyautogui.sleep(0.5)
-
-                        pyautogui.press('left')
-                        pyautogui.sleep(0.5)
-
-                        pyautogui.press('left')
-                        pyautogui.sleep(0.5)
-
-                        pyautogui.press('left')
-                        pyautogui.sleep(0.5)
-
-                        pyautogui.press('left')
-                        pyautogui.sleep(0.5)
-
-                        #Tab to highlight button
-                        pyautogui.press('tab')
-                        pyautogui.sleep(0.5)
-
-                        #Enter to take job
-                        pyautogui.press('enter')
+                    if job_row.iloc[0] == FBOs:
+                        #finding the $ value on the screen
+                        #print_with_timestamp('Searching for ' + str(job_row.iloc[1]))
+                        query_y_value = screenshot_fbo_job(job_row.iloc[1])
+                        #print_with_timestamp('y value: ' + str(query_y_value))
+                        if query_y_value < 1:
+                            aaaaaa = input('Couldnt find job on screen, searched for: ' + str(job_row.iloc[1]))
+                            pyautogui.click(x=1000, y=10)
+                            
+                        pyautogui.click(x=107, y=query_y_value)
+                        #print_with_timestamp('Mouse would be clicking right now')
+                        time.sleep(5)
+                        #print_with_timestamp('End')
                         jobs_Amount_Taken += 1
-                        #Long sleep for load screen
-                        pyautogui.sleep(5)
-
-                        #click back on cargo1
-                        pyautogui.click(x=662, y=464)
-                        pyautogui.sleep(0.5)
-
-                        break
-                
-                #next record 
-                pyautogui.press('down')
-                pyautogui.sleep(1.5)
-
-                #Copy the row
-                pyautogui.hotkey('ctrl', 'c')
-                pyautogui.sleep(1.5)
-
+                        query_y_value = 0
+                        time.sleep(5)
+                        
                 if jobs_Amount_Taken == jobs_Amount:
                     pyautogui.click(x=243, y=300)
                     pyautogui.sleep(0.5)
+                    #Found all the jobs for this FBO
                     break
-
-                #If there's no more jobs or if the amount of jobs we are expecting to see is done
-                if pyperclip.paste().split("\t") == current_job:
-                    print("Looking for " + jobs_Amount + ", can only find " + jobs_Amount_Taken)
-                    aaaaaaa = input("Possibly can't find a job, seems we are at the end of the list")
-                    break
-
-                current_job = pyperclip.paste().split("\t")
-                fuckedLoop += 1
-        
         #Next FBO
         pyautogui.press('down')
         pyautogui.sleep(0.5)

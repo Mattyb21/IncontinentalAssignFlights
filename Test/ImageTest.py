@@ -19,7 +19,7 @@ def find_second_occurrence_of_word(word):
     for i in range(len(text_data['text'])):
         if text_data['text'][i].lower() == word.lower():
             occurrence_count += 1
-            if occurrence_count == 2:  # Check if it's the second occurrence
+            if occurrence_count == 1:  # Check if it's the second occurrence
                 # Extract coordinates of the word
                 x = text_data['left'][i]
                 y = text_data['top'][i]
@@ -34,12 +34,13 @@ def click_second_occurrence(word):
         pyautogui.click(coords[0], coords[1])
     else:
         print(f"Second occurrence of '{word}' not found on screen.")
+        
+        
 pyautogui.click(x=2786, y=326)
 pyautogui.sleep(1)
 
 
-# Replace 'example' with 'INCOZ'
-click_second_occurrence('INCOZ')
+click_second_occurrence('4,386,569.50')
 
 # Wait a bit before the program ends
 time.sleep(20)
