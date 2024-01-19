@@ -663,7 +663,7 @@ def aircraftmaintenance(aircraft_List):
             pyautogui.click(x=1741, y=303)
             time.sleep(1)
 
-        maint_variable += 40
+        maint_variable += 42
 
         # Click on next row
         pyautogui.click(x=1741, y=maint_variable)
@@ -713,7 +713,7 @@ def LaunchandPrepOnair():
 
     #Click VA
     pyautogui.click(x=627, y=175)
-    time.sleep(45)
+    time.sleep(60)
     #Real wake up call that onair is slow as fuck
 
 # Try to find the window
@@ -1173,7 +1173,7 @@ def workOrder_controller():
     #Navigate to the workorder page
     
     #Extended time on this to allow whatever shit keeps fucking up
-    time.sleep(50)
+    time.sleep(60)
     
     
     #pyautogui.click(x=150, y=70)
@@ -1185,6 +1185,10 @@ def workOrder_controller():
     #waiting for onair to load the workorder page
     
     #Hotkey to get to work orders
+    pyautogui.hotkey('alt', 'w')
+    time.sleep(1)
+    pyautogui.hotkey('alt', 'w')
+    time.sleep(1)
     pyautogui.hotkey('alt', 'w')
     time.sleep(40)
     
@@ -1203,12 +1207,12 @@ def workOrder_controller():
         # Call createworkorder for each matching row
         for index, row in matching_rows.iterrows():
             #Refresh the page
-            pyautogui.click(x=309, y=116)
+            pyautogui.click(x=301, y=117)
             time.sleep(40)
             
             print_with_timestamp("Attempting to create " + row['Identifier'])
             #Click add work order
-            pyautogui.click(x=1220, y=174)
+            pyautogui.click(x=1402, y=184)
             time.sleep(5)
             createWorkOrder(row['Aircraft Type'], row['Identifier'], index) 
 
