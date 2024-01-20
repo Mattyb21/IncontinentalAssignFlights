@@ -26,6 +26,26 @@ pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tessera
 
 #************* SETTINGS ***********#
 
+def find_first_occurrence_of_word(word):
+    # Take a screenshot
+    screenshot = pyautogui.screenshot()
+
+    # Use OCR to find text in the screenshot
+    text_data = pytesseract.image_to_data(screenshot, output_type=pytesseract.Output.DICT)
+
+    occurrence_count = 0  # Counter for the occurrences of the word
+
+    # Look for the word in the OCR results
+    for i in range(len(text_data['text'])):
+        if text_data['text'][i].lower() == word.lower():
+            occurrence_count += 1
+            if occurrence_count == 1:  # Check if it's the second occurrence
+                # Extract coordinates of the word
+                x = text_data['left'][i]
+                y = text_data['top'][i]
+                return x, y
+
+    return None
 
 def find_second_occurrence_of_word(word):
     # Take a screenshot
@@ -54,7 +74,19 @@ def click_second_occurrence(word):
         # Move the mouse to the second occurrence of the word and click
         pyautogui.click(coords[0], coords[1])
     else:
-        print(f"Second occurrence of '{word}' not found on screen.")
+        aaaaaaa = input(f"Second occurrence of '{word}' not found on screen.")
+        print_with_timestamp(f"Second occurrence of '{word}' not found on screen.")
+
+def click_first_occurrence(word):
+    coords = find_first_occurrence_of_word(word)
+    if coords:
+        # Move the mouse to the second occurrence of the word and click
+        pyautogui.click(coords[0], coords[1])
+    else:
+        print_with_timestamp(f"First occurrence of '{word}' not found on screen.")
+        aaaaaaa = input(f"First occurrence of '{word}' not found on screen.")
+        
+
 
 def filter_human_only(missions, human_only):
     if human_only == 1:
@@ -881,7 +913,7 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
     
     
     #Select Copy Crew
-    pyautogui.click(x=462, y=1216)
+    pyautogui.click(x=451, y=1186)
     time.sleep(1)
     
     #Select Work Order Name
@@ -1187,7 +1219,7 @@ def workOrder_controller():
             pyautogui.click(x=301, y=117)
             time.sleep(40)
             
-            print_with_timestamp("Attempting to create " + row['Identifier'])
+            #print_with_timestamp("Attempting to create " + row['Identifier'])
             #Click add work order
             pyautogui.click(x=1402, y=184)
             time.sleep(5)
