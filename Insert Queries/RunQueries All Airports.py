@@ -3,6 +3,33 @@ import pyperclip
 import pandas as pd
 import shutil
 import csv
+import sys
+import time
+import os
+import subprocess
+import random
+import datetime
+
+def myexcepthook(type, value, traceback, oldhook=sys.excepthook):
+    oldhook(type, value, traceback)
+    aaaaaaaa = input("")
+
+sys.excepthook = myexcepthook
+
+def print_with_timestamp(message):
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+    log_message = f"{timestamp}: {message}"
+    
+    # Print to console
+    print(log_message)
+
+    # Log file path (in the same directory)
+    log_file_path = 'Log.txt'
+
+    # Write to log file
+    with open(log_file_path, "a") as log_file:
+        log_file.write(log_message + "\n")
+
 
 def checkFiles(selected_airport, aircraft):
     # Returns true if the airport needs to be updated
@@ -33,9 +60,9 @@ def checkFiles(selected_airport, aircraft):
 
             if airport_count == 0 and new_line[2] == 'True':
                 #Airport not found and is marked as true
-                #print('AIRPORT COUNT CHECK FAIL: Checking: ' + new_line[0] + 'Dest airport: ' + new_line[1] + ' Airport count: ' + str(airport_count))
+                #print_with_timestamp('AIRPORT COUNT CHECK FAIL: Checking: ' + new_line[0] + 'Dest airport: ' + new_line[1] + ' Airport count: ' + str(airport_count))
                 return True
-            #print('Checking: ' + new_line[0] + 'Dest airport: ' + new_line[1] + ' Airport count: ' + str(airport_count))
+            #print_with_timestamp('Checking: ' + new_line[0] + 'Dest airport: ' + new_line[1] + ' Airport count: ' + str(airport_count))
     
     return False
 
@@ -121,6 +148,13 @@ sorted_df = melted_df.sort_values(by=['Destination', 'Origin'])
 sorted_df.to_csv('TBM9.csv', index=False)
 
 
+df = pd.read_csv("Onair Dispatch Helper - CJ4 ROUTES.csv")
+df.rename(columns={df.columns[0]: 'Origin'}, inplace=True)
+melted_df = df.melt(id_vars=df.columns[0], var_name='Destination', value_name='Approved')
+#Sort to match Onair
+sorted_df = melted_df.sort_values(by=['Destination', 'Origin'])
+sorted_df.to_csv('CJ4.csv', index=False)
+
 #Starting at the first airport
 fbo_offset = 320
 pyautogui.click(x=31, y=226)
@@ -144,7 +178,7 @@ for line in fbos:
     pyautogui.sleep(0.1)
     #Copy the data
     pyautogui.hotkey('ctrl', 'c')
-    pyautogui.sleep(0.1)
+    pyautogui.sleep(1.5)
     #Grab the 7th field
     
     FBO_Menu_Selected = pyperclip.paste().split("\t")
@@ -165,7 +199,9 @@ for line in fbos:
     pyautogui.click(x=250, y=266)
     pyautogui.sleep(0.2)
     pyautogui.hotkey('ctrl', 'a')
+    time.sleep(1)
     pyautogui.hotkey('ctrl', 'c')
+    time.sleep(1.5)
 
     selected_airport = pyperclip.paste()
 
@@ -240,6 +276,10 @@ for line in fbos:
                         query_class = 3 #0 - None, 1 - Eco, 2 - Business, 3 - First
                         cargo_min = '0' 
                     
+                    if queryfields[query_number] == "CJ4":
+                        query_pax = '7'
+                        query_class = 3 #0 - None, 1 - Eco, 2 - Business, 3 - First
+                        cargo_min = '0' 
 
                     #Remove old pax
                     pyautogui.click(x=2684, y=942)
@@ -324,16 +364,16 @@ for line in fbos:
                                 # Perform action for true record
                                 # Send spacebar key
                                 pyautogui.press('space')
-                                #print(f"Sent spacebar for airport: {query_name}")
+                                #print_with_timestamp(f"Sent spacebar for airport: {query_name}")
                                 pyautogui.sleep(0.01)
                             
                             # Send down arrow key regardless of the record
                             pyautogui.press('down')
-                            #print(f"Sent down arrow for airport: {query_name}")
+                            #print_with_timestamp(f"Sent down arrow for airport: {query_name}")
                             pyautogui.sleep(0.05)
 
                 # Adding 100 to the query to go to the next one and going to the next query
-                print(f"Completed query:: {query_number} for {selected_airport}")
+                print_with_timestamp(f"Completed query:: {query_number} for {selected_airport}")
                 queryvalue += 100
                 query_number += 1
     #Commit changes
@@ -343,7 +383,7 @@ for line in fbos:
     #Click back
     pyautogui.click(x=30, y=116)
     pyautogui.sleep(1)
-    print(f"Completed airport ::{selected_airport}")
+    print_with_timestamp(f"Completed airport ::{selected_airport}")
     
 
 
@@ -372,5 +412,12 @@ df.to_csv('.\ChangeCheck\LastFlightData.csv', index=False)
 shutil.copy('Onair Dispatch Helper - QueryMap.csv', '.\ChangeCheck\QueryMap.csv')
 
 
-print("All records processed.")
+print_with_timestamp("All records processed.")
+
+timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")
+# Define the old and new file paths
+old_file_path = 'Log.txt'
+new_file_name = f"Log_{timestamp}.txt"
+new_file_path = os.path.join('logs', new_file_name)
+
 input()

@@ -12,9 +12,9 @@ import pygetwindow as gw
 import shutil
 
 #************* SETTINGS ***********#
-PlayerJobCreationFile = 1
-NoNewJobsFile = 0
-CompleteEverythingFile = 0
+PlayerJobCreationFile = '1'
+NoNewJobsFile = '0'
+CompleteEverythingFile = '0'
 #************* SETTINGS ***********#
 
 script_path = 'CoreScript.py'

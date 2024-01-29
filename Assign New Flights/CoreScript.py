@@ -24,6 +24,11 @@ CompleteEverythingFile = int(sys.argv[3])
 # Set the path to the tesseract executable
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Change this to your Tesseract path
 
+def myexcepthook(type, value, traceback, oldhook=sys.excepthook):
+    oldhook(type, value, traceback)
+    aaaaaaaa = input("")
+
+sys.excepthook = myexcepthook
 #************* SETTINGS ***********#
 
 def find_first_occurrence_of_word(word):
@@ -85,8 +90,6 @@ def click_first_occurrence(word):
     else:
         print_with_timestamp(f"First occurrence of '{word}' not found on screen.")
         aaaaaaa = input(f"First occurrence of '{word}' not found on screen.")
-        
-
 
 def filter_human_only(missions, human_only):
     if human_only == 1:
@@ -363,6 +366,18 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName, player
         maxCargo = 30000
         knots = 488
         opCost = 236034
+        
+    if aircraftType == 'Cessna CJ4 Citation':
+        minPax0 = 0
+        maxPax0 = 0
+        minPax1 = 0
+        maxPax1 = 0
+        minPax2 = 3
+        maxPax2 = 8
+        minCargo = 0
+        maxCargo = 0
+        knots = 406
+        opCost = 3055
 
     last_minute = 1 #disables last minute running
     playerMixup = playerMixup
@@ -400,7 +415,12 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName, player
     if preset == "g":
         route_amount = 28
         hours = 154
-
+    
+    if PlayerJobCreationFile == 1:
+        route_amount = preset
+        hours = 75
+        max_Hours = 100
+        
     route, work_order, jobs_take, total_pay, selected_mission_ids = plan_route(starting_icao, 1, last_minute, hours, route_amount, max_Hours, playerMixup, aircraftName)
 
     if selected_mission_ids:
@@ -598,11 +618,11 @@ def aircraftmaintenance(aircraft_List):
     time.sleep(20)
     
     # Sort by 100h
-    pyautogui.click(x=1741, y=303)
+    pyautogui.click(x=1760, y=303)
     time.sleep(2)
 
     # Click first row
-    pyautogui.click(x=1741, y=347)
+    pyautogui.click(x=1760, y=347)
     time.sleep(1)
 
     # Copy data from first row
@@ -692,13 +712,13 @@ def aircraftmaintenance(aircraft_List):
                 time.sleep(40)
             
             # Sort by 100h
-            pyautogui.click(x=1741, y=303)
+            pyautogui.click(x=1760, y=303)
             time.sleep(1)
 
         maint_variable += 42
 
         # Click on next row
-        pyautogui.click(x=1741, y=maint_variable)
+        pyautogui.click(x=1760, y=maint_variable)
         time.sleep(1)
         
         pyautogui.hotkey('ctrl', 'c')
@@ -1018,6 +1038,12 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
                 firstPaxLoaded = 0
                 cargoLoaded = 0
             
+            if aircraft == 'Cessna CJ4 Citation':
+                ecoPaxLoaded = 1
+                busPaxLoaded = 1
+                firstPaxLoaded = 0
+                cargoLoaded = 1
+            
             #This is how many times we retry the work order
             workOrderRunFails = 0
         
@@ -1109,6 +1135,10 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
             if aircraft == 'Boeing 787-10':
                 ffph = 2534
                 knots = 488
+                
+            if aircraft == 'Cessna CJ4 Citation':
+                ffph = 2534
+                knots = 402
 
             #Set Fuel
             # if load_fuel == 1:
@@ -1354,7 +1384,7 @@ aircraftInOperation = pd.read_csv('AircraftInOperation.csv')
 aircraft_List = aircraftInOperation['Aircraft'].tolist()
 aircraft_List = get_workorders(aircraft_List)
 
-if NoNewJobsFile == 0:
+if NoNewJobsFile == 0 and PlayerJobCreationFile == 0:
     aircraftmaintenance(aircraft_List)
     print_with_timestamp("Aircraft Maintenance Complete")
 
