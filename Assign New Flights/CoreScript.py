@@ -112,17 +112,17 @@ def player_mixup(missions):
     missions_filtered = missions[~missions['Mission ID'].isin(missions_to_remove)]
     return missions_filtered
 
-def filter_pax(missions, minPax0, maxPax0, minPax1, maxPax1, minPax2, maxPax2, minCargo, maxCargo):
+def filter_pax(missions, minPax0, maxPax0, minPax1, maxPax1, minPax2, maxPax2, minCargo, maxCargo, max_range):
     def is_mission_valid(mission):
         # Check each row of a mission
         for _, row in mission.iterrows():
-            pax0, pax1, pax2, cargo = row['PaxClass0'], row['PaxClass1'], row['PaxClass2'], row['Cargo']
+            pax0, pax1, pax2, cargo, distance = row['PaxClass0'], row['PaxClass1'], row['PaxClass2'], row['Cargo'], row['Distance']
 
             # Check if mission satisfies all constraints
             if not (minPax2 <= pax2 <= maxPax2 and
                     minPax1 <= pax1 <= (maxPax1 + maxPax2 - pax2) and
                     minPax0 <= pax0 <= (maxPax0 + (maxPax2 - pax2) + (maxPax1 - pax1)) and
-                    minCargo <= cargo <= maxCargo):
+                    minCargo <= cargo <= maxCargo and distance <= max_range):
                 return False
 
         return True
@@ -217,7 +217,11 @@ def add_flights_from_mission(missions, mission_flights, max_flights, max_Hours):
             'DepartureICAO': [flight['DepartureICAO']],
             'DestinationICAO': [flight['DestinationICAO']],
             'Distance': [flight['Distance']],
-            'Descript' : [flight['Descript']]
+            'Descript' : [flight['Descript']],
+            'PaxClass0' : [flight['PaxClass0']],
+            'PaxClass1' : [flight['PaxClass1']],
+            'PaxClass2' : [flight['PaxClass2']],
+            'Cargo' : [flight['Cargo']]
         })], ignore_index=True)
 
         # After adding a flight from the mission, remove the mission from the list of missions
@@ -288,7 +292,7 @@ def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_
     missions = filter_human_only(missions, human_only)
     missions = filter_last_minute(missions, last_minute)
     missions = filter_by_expiration(missions, hours)
-    missions = filter_pax(missions, minPax0, maxPax0, minPax1, maxPax1, minPax2, maxPax2, minCargo, maxCargo)
+    missions = filter_pax(missions, minPax0, maxPax0, minPax1, maxPax1, minPax2, maxPax2, minCargo, maxCargo, max_range)
     
     if playerMixup != 1:
         missions = missions.sort_values(by='Pay', ascending=False)
@@ -301,7 +305,7 @@ def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_
     current_flights = 0
     route = pd.DataFrame()
     hoursWorked = 0
-    work_order = pd.DataFrame(columns=['Order', 'Mission ID', 'DepartureICAO', 'DestinationICAO', 'Distance', 'Descript'])
+    work_order = pd.DataFrame(columns=['Order', 'Mission ID', 'DepartureICAO', 'DestinationICAO', 'Distance', 'Descript', 'PaxClass0', 'PaxClass1', 'PaxClass2', 'Cargo'])
     dfs(missions, starting_icao, route_amount, max_Hours)
 
     #if len(route) > 0 and route.iloc[-1]['DestinationICAO'] != starting_icao:
@@ -329,7 +333,7 @@ def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_
 
 def automation_flights(starting_icao, aircraftType, preset, aircraftName, playerMixup):
 
-    global minPax0, maxPax0, minPax1 ,maxPax1, minPax2, maxPax2, minCargo, maxCargo, knots, opCost
+    global minPax0, maxPax0, minPax1 ,maxPax1, minPax2, maxPax2, minCargo, maxCargo, knots, opCost, max_range
 
     if aircraftType == 'Airbus A320':
         minPax0 = 155
@@ -342,7 +346,8 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName, player
         maxCargo = 0
         knots = 447
         opCost = 69559
-        
+        max_range = 1784
+
     if aircraftType == 'TBM 930':
         knots = 330
         minPax0 = 0
@@ -354,6 +359,7 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName, player
         minCargo = 0
         maxCargo = 0
         opCost = 1395
+        max_range = 3300
 
     if aircraftType == 'Boeing 787-10':
         minPax0 = 154
@@ -366,6 +372,7 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName, player
         maxCargo = 30000
         knots = 488
         opCost = 236034
+        max_range = 6430
         
     if aircraftType == 'Cessna CJ4 Citation':
         minPax0 = 0
@@ -378,6 +385,22 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName, player
         maxCargo = 0
         knots = 406
         opCost = 3055
+        max_range = 2165
+
+    if aircraftType == 'Airbus A320 Neo':
+        minPax0 = 155
+        maxPax0 = 186
+        minPax1 = 0
+        maxPax1 = 0
+        minPax2 = 0
+        maxPax2 = 0
+        minCargo = 0
+        maxCargo = 0
+        knots = 447
+        opCost = 69559
+        max_range = 1784
+
+
 
     last_minute = 1 #disables last minute running
     playerMixup = playerMixup
@@ -617,8 +640,8 @@ def aircraftmaintenance(aircraft_List):
     aircraft_names = [entry['Aircraft'] for entry in aircraft_List]
     time.sleep(20)
     
-    # Sort by 100h
-    pyautogui.click(x=1760, y=303)
+    # Sort by engine
+    pyautogui.click(x=2092, y=305)
     time.sleep(2)
 
     # Click first row
@@ -636,7 +659,7 @@ def aircraftmaintenance(aircraft_List):
     while True:
 
         if 'Needed' not in ac_maint_line[3]:
-            if float(ac_maint_line[10].split()[0]) > 35:
+            if float(ac_maint_line[14].split()[0]) > 0.70 and float(ac_maint_line[10].split()[0]) > 35:
                 break
         
         if ac_maint_line[0] in aircraft_names and 'Needed' not in ac_maint_line[4]:
@@ -649,6 +672,7 @@ def aircraftmaintenance(aircraft_List):
             # Select Workshop
             pyautogui.click(x=1050, y=maint_variable + 116)
             time.sleep(15)
+            
             
             # Select 100h or annual
             if float(ac_maint_line[11]) < 8:
@@ -711,8 +735,8 @@ def aircraftmaintenance(aircraft_List):
                 pyautogui.click(x=3124, y=611)
                 time.sleep(40)
             
-            # Sort by 100h
-            pyautogui.click(x=1760, y=303)
+            # Sort by Engines
+            pyautogui.click(x=2092, y=305)
             time.sleep(1)
 
         maint_variable += 42
@@ -720,7 +744,7 @@ def aircraftmaintenance(aircraft_List):
         # Click on next row
         pyautogui.click(x=1760, y=maint_variable)
         time.sleep(1)
-        
+ 
         pyautogui.hotkey('ctrl', 'c')
         time.sleep(1.5)
         ac_maint_line = pyperclip.paste().split("\t")
@@ -882,9 +906,14 @@ def take_queries():
                         query_y_value = screenshot_fbo_job(job_row.iloc[1])
                         #print_with_timestamp('y value: ' + str(query_y_value))
                         if query_y_value < 1:
-                            aaaaaa = input('Couldnt find job on screen, searched for: ' + str(job_row.iloc[1]))
-                            pyautogui.click(x=1000, y=10)
-                            
+                            #Sort and retry
+                            pyautogui.click(x=1000, y=423)
+                            time.sleep(1)
+                            query_y_value = screenshot_fbo_job(job_row.iloc[1])
+                            if query_y_value < 1: #Just going to retry the search, seems like the font in white throws the screengrab
+                                print_with_timestamp('Couldnt find job on screen, searched for: ' + str(job_row.iloc[1]))
+                                aaaaaa = input('Couldnt find job on screen, searched for: ' + str(job_row.iloc[1]))
+                                pyautogui.click(x=1000, y=10)
                         pyautogui.click(x=107, y=query_y_value)
                         #print_with_timestamp('Mouse would be clicking right now')
                         time.sleep(5)
@@ -981,7 +1010,7 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
                 pyautogui.click(x=385, y=236)
                 time.sleep(1)
                 #Delete Grouped By
-                pyautogui.click(x=852, y=761)
+                pyautogui.click(x=854, y=810)
                 time.sleep(0.5)
                 
                 original_departure = 1
@@ -995,7 +1024,7 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
             
             
             #Starting line for first payload. We add 33 for each payload we go down        
-            pyautogui.click(x=1079, y=835)
+            pyautogui.click(x=1079, y=885)
             pyautogui.sleep(0.2)
             
             pyautogui.hotkey('ctrl', 'c')
@@ -1200,11 +1229,14 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
         pyautogui.click(x=3464, y=237)
         pyautogui.sleep(10)
     else:
-        #Select Save
-        pyautogui.click(x=3630, y=229)
+        # We activate now from March update
+        pyautogui.click(x=3464, y=237)
         pyautogui.sleep(10)
+        #Select Save
+        #pyautogui.click(x=3630, y=229)
+        #pyautogui.sleep(10)
         #Select Back
-        pyautogui.click(x=30, y=118)
+        #pyautogui.click(x=30, y=118)
 
 def workOrder_controller():
     #We will make all the workorders from here, because it's stupid how hard it is to make :(

@@ -6,7 +6,7 @@ currentField = 0
 
 
 
-while currentField < 14:
+while currentField < 16:
     print('Field ' + str(currentField) + ': ' + currentPayload[currentField])
     print('Type is: ' + str(type(currentPayload[currentField])))
     currentField += 1
