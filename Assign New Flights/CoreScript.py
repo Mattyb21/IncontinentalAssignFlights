@@ -372,7 +372,7 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName, player
         maxCargo = 30000
         knots = 488
         opCost = 236034
-        max_range = 6430
+        max_range = 5688 #Reduced for full fuel load with 315 pax
         
     if aircraftType == 'Cessna CJ4 Citation':
         minPax0 = 0
@@ -1232,11 +1232,6 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
         # We activate now from March update
         pyautogui.click(x=3464, y=237)
         pyautogui.sleep(10)
-        #Select Save
-        #pyautogui.click(x=3630, y=229)
-        #pyautogui.sleep(10)
-        #Select Back
-        #pyautogui.click(x=30, y=118)
 
 def workOrder_controller():
     #We will make all the workorders from here, because it's stupid how hard it is to make :(
@@ -1290,7 +1285,6 @@ def workOrder_controller():
 def queryFleet():
     companyId = "c1069b00-adf0-4f00-b744-4287071e5484"
     endpoint = f"https://server1.onair.company/api/v1/company/{companyId}/fleet"
-
     apiKey = "8e62f5f0-b026-4301-a8d8-122a2d34bd4e"
     headers = {
         "Content-Type": "application/json",
@@ -1300,29 +1294,40 @@ def queryFleet():
 
     try:
         response = requests.get(endpoint, headers=headers)
-        data = json.loads(response.text)
+        data = response.json()  # More direct way to get JSON response
 
         fleetList = data.get('Content', [])
 
-        # Extract Identifier and DisplayName
-        fleetData = [[item['Identifier'], item['AircraftType']['DisplayName']] for item in fleetList]
+        # Corrected list comprehension
+        fleetData = [
+            [
+                item['Identifier'], 
+                item['AircraftType']['DisplayName'], 
+                item['ConfigFirstSeats'], 
+                item['ConfigBusSeats'], 
+                item['ConfigEcoSeats'],
+                item['AircraftType']['MaximumRangeInNM'], 
+                item['AircraftType']['EmptyWeight'], 
+                item['AircraftType']['MaximumGrossWeight'], 
+                item['AircraftType']['FuelTotalCapacityInGallons']
+            ] for item in fleetList
+        ]
 
         # Sort by Identifier
         fleetData.sort(key=lambda x: x[0])
 
-        # Prepare the table headers
-        headersData = [["Identifier", "Aircraft Type"]]
+        # Headers corrected for consistency
+        headersData = ["Identifier", "Aircraft Type", "First Seats", "Business Seats", "Economy Seats", "Maximum Range (NM)", "Empty Weight", "Maximum Gross Weight", "Fuel Capacity (Gallons)"]
 
-        results = headersData + fleetData
-
-        # Create a DataFrame from the results
-        results_df = pd.DataFrame(results[1:], columns=results[0])
+        # Directly creating DataFrame
+        results_df = pd.DataFrame(fleetData, columns=headersData)
 
         # Write the DataFrame to a CSV file
         results_df.to_csv('Fleet.csv', index=False)
-        print_with_timestamp("Fleet data retrieved and sorted")
+        print("Fleet data retrieved and sorted")
     except Exception as error:
         print(f"API Request Error: {error}")
+
 
 def RefuelFBOs():
     time.sleep(30)
@@ -1431,6 +1436,7 @@ checkForQueries = 0
 
 if CompleteEverythingFile == 1: #We are just running the below if it's not for a player
     #We will check if we need to check the queries
+    queryFleet()
     for aircraft_info in aircraft_List:
         hours_before_inspection = aircraft_info['HoursBefore100HInspection']
         if hours_before_inspection != 'N/A':  # Ensure the data exists

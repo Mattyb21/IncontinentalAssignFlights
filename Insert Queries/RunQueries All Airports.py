@@ -162,6 +162,20 @@ def assign_destinations(airports_table, airport):
             pyautogui.press('down')
             time.sleep(0.05)
 
+def save_screenshot(airport, query_number, aircraft_code):
+    # Ensure the screenshots directory exists
+    screenshots_dir = "screenshots"
+    os.makedirs(screenshots_dir, exist_ok=True)
+
+    # Format the filename
+    filename = f"{airport}_{query_number}_{aircraft_code}.png"
+
+    # Full path for the screenshot
+    screenshot_path = os.path.join(screenshots_dir, filename)
+
+    # Take screenshot and save it
+    pyautogui.screenshot(screenshot_path)
+
 def airport_updater(airport, query_map_df, query_definitions_df, query_extract_df):
     #Setting the pixel to start on
     queryvalue = 1900
@@ -200,26 +214,26 @@ def airport_updater(airport, query_map_df, query_definitions_df, query_extract_d
                 
                 #Select query
                 pyautogui.click(x=queryvalue, y=1253)
-                pyautogui.sleep(0.2)
+                pyautogui.sleep(0.25)
                 
                 #Remove old pax - select max pax
                 pyautogui.click(x=2731, y=1384)
-                pyautogui.sleep(0.1)
+                pyautogui.sleep(0.25)
                 pyautogui.write("0")
                 
                 #Remove old cargo - select max cargo
                 pyautogui.click(x=2748, y=1333)
-                pyautogui.sleep(0.1)
+                pyautogui.sleep(0.25)
                 pyautogui.write("0")
                 
                 #Add pax count
                 pyautogui.click(x=2601, y=1379)
-                pyautogui.sleep(0.1)
+                pyautogui.sleep(0.25)
                 pyautogui.write(str(aircraft_details['Pax min']))
                 
                 #Add Cargo
                 pyautogui.click(x=2627, y=1341)
-                pyautogui.sleep(0.1)
+                pyautogui.sleep(0.25)
                 pyautogui.write(str(aircraft_details['Cargo min']))
                 
                 #preferred seats
@@ -228,7 +242,7 @@ def airport_updater(airport, query_map_df, query_definitions_df, query_extract_d
                 
                 #Select based on class
                 pyautogui.click(x=2590, y=1462 + (33 * int(aircraft_details['Class'])))
-                pyautogui.sleep(0.1)
+                pyautogui.sleep(0.25)
                 
                 new_queries = 0
                 # Capture a region (top-left x, top-left y, width, height)
@@ -264,12 +278,13 @@ def airport_updater(airport, query_map_df, query_definitions_df, query_extract_d
                 #This will make a table in alphabetical order 
                 arrival_locations = find_arrival_locations(airport, query_code, query_extract_df, query_map_df)
                 assign_destinations(arrival_locations, airport)
+                save_screenshot(airport, query_number, query_code)
                 
                 queryvalue += 100
                 
     
     #Click save query
-    pyautogui.click(x=2790, y=745)
+    pyautogui.click(x=2768, y=1198)
     pyautogui.sleep(5)
     #Click back
     pyautogui.click(x=30, y=116)
