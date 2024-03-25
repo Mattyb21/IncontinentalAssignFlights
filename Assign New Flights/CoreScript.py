@@ -906,8 +906,8 @@ def take_queries():
                         query_y_value = screenshot_fbo_job(job_row.iloc[1])
                         #print_with_timestamp('y value: ' + str(query_y_value))
                         if query_y_value < 1:
-                            #Sort and retry
-                            pyautogui.click(x=1000, y=423)
+                            #Click a different entry and retry
+                            pyautogui.click(x=646, y=469)
                             time.sleep(1)
                             query_y_value = screenshot_fbo_job(job_row.iloc[1])
                             if query_y_value < 1: #Just going to retry the search, seems like the font in white throws the screengrab
@@ -1053,6 +1053,7 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
             currentPayload = pyperclip.paste().split("\t")
             
             comparisonPasteVariable = 0
+            entireRetryVariable = 0
             fuckedLoop = 0
             #Setting to check we look at the type before we load
             if aircraft == 'Airbus A320':
@@ -1115,6 +1116,9 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
                 if ecoPaxLoaded == 1 and busPaxLoaded == 1 and firstPaxLoaded == 1 and cargoLoaded == 1:
                     break
 
+                if entireRetryVariable = 1: #This should be the rerun
+                    print_with_timestamp(str(currentPayload[1]) + " | " + str(currentPayload[11]) + " | " + str(currentPayload[12]) + " | " + str(currentPayload[13]) + " | " + str(currentPayload[3]))
+
                 #currentPayload[1] != destination or len(currentPayload[11]) > 0 or currentPayload[12] != 'False' or len(currentPayload[13]) > 2:
                 pyautogui.press('down')
                 pyautogui.sleep(0.2)
@@ -1133,11 +1137,47 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
                         time.sleep(0.2)
                         comparisonPasteVariable += 1
                     else:
-                        break
+                        if ecoPaxLoaded == 0 or busPaxLoaded == 0 or firstPaxLoaded == 0:
+                            if entireRetryVariable = 1: #She's just fucked
+                                break
+                            
+                            #redoing all the top instructions again
+                            pyautogui.click(x=1079, y=885)
+                            pyautogui.sleep(0.2)
+                            
+                            pyautogui.hotkey('ctrl', 'c')
+                            pyautogui.sleep(0.2)
+                            
+                            currentPayload = pyperclip.paste().split("\t")
+                            pyautogui.sleep(0.2)
+                            
+                            #Tab across to the load box
+                            pyautogui.press('tab')
+                            pyautogui.sleep(0.1)
+                            pyautogui.press('tab')
+                            pyautogui.sleep(0.1)
+                            pyautogui.press('tab')
+                            pyautogui.sleep(0.1)
+                            pyautogui.press('tab')
+                            pyautogui.sleep(0.1)
+                            pyautogui.press('tab')
+                            pyautogui.sleep(0.1)
+                            pyautogui.press('tab')
+                            pyautogui.sleep(0.1)
+                            
+                            
+                            pyautogui.hotkey('ctrl', 'c')
+                            time.sleep(0.2)
+                            currentPayload = pyperclip.paste().split("\t")
+                            entireRetryVariable = 1
+                            comparisonPasteVariable = 0
+                            print_with_timestamp("Looking for " + origin + " -> " + destination + " | " + descript + " | E / B / F: " + str(ecoPaxLoaded) + str(busPaxLoaded) + str(firstPaxLoaded))
+                        else:
+                            break
 
                 currentPayload = pyperclip.paste().split("\t")
                 fuckedLoop += 1
-                if fuckedLoop == 100:
+                if fuckedLoop == 200:
                     print_with_timestamp('Probably no job available that matches the destination airport')
                     exit()           
 
@@ -1273,7 +1313,7 @@ def workOrder_controller():
         # Call createworkorder for each matching row
         for index, row in matching_rows.iterrows():
             #Refresh the page
-            pyautogui.click(x=301, y=117)
+            pyautogui.click(x=148, y=124)
             time.sleep(40)
             
             #print_with_timestamp("Attempting to create " + row['Identifier'])
@@ -1306,9 +1346,9 @@ def queryFleet():
                 item['ConfigFirstSeats'], 
                 item['ConfigBusSeats'], 
                 item['ConfigEcoSeats'],
-                item['AircraftType']['MaximumRangeInNM'], 
-                item['AircraftType']['EmptyWeight'], 
-                item['AircraftType']['MaximumGrossWeight'], 
+                item['AircraftType']['maximumRangeInNM'], 
+                item['AircraftType']['emptyWeight'], 
+                item['AircraftType']['maximumGrossWeight'], 
                 item['AircraftType']['FuelTotalCapacityInGallons']
             ] for item in fleetList
         ]
@@ -1324,10 +1364,10 @@ def queryFleet():
 
         # Write the DataFrame to a CSV file
         results_df.to_csv('Fleet.csv', index=False)
-        print("Fleet data retrieved and sorted")
+        print_with_timestamp("Fleet data retrieved and sorted")
     except Exception as error:
-        print(f"API Request Error: {error}")
-
+        print_with_timestamp(f"API Request Error: {error}")
+        input("Stopped")
 
 def RefuelFBOs():
     time.sleep(30)
