@@ -13,6 +13,8 @@ import shutil
 import sys
 import pytesseract
 from PIL import Image
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 global PlayerJobCreationFile, NoNewJobsFile, CompleteEverythingFile
 
@@ -30,6 +32,95 @@ def myexcepthook(type, value, traceback, oldhook=sys.excepthook):
 
 sys.excepthook = myexcepthook
 #************* SETTINGS ***********#
+
+
+def fetch_data_for_fbo(fboId, headers):
+
+    #Fetch jobs for a single FBO ID. Returns a tuple of the FBO ID and its missions.
+
+    endpoint = f"https://server1.onair.company/api/v1/fbo/{fboId}/jobs"
+    response = requests.get(endpoint, headers=headers)
+    if response.status_code == 200:
+        return fboId, json.loads(response.text).get('Content', [])
+    else:
+        return fboId, []
+
+def process_missions(fboId, missions):
+
+    #Process the fetched missions for a given FBO ID.
+
+    results = []
+    missions_with_humanonly_true = {}
+    for mission in missions:
+        flights = mission.get('Charters', []) + mission.get('Cargos', [])
+        for flight in flights:
+            humanOnly = flight.get('HumanOnly', False)
+            if humanOnly:
+                missions_with_humanonly_true[mission.get("Id")] = True
+
+        for flight in flights:
+            departureAirport = flight.get('DepartureAirport', {}).get('Name', "")
+            departureICAO = flight.get('DepartureAirport', {}).get('ICAO', "")
+            destinationAirport = flight.get('DestinationAirport', {}).get('Name', "")
+            destinationICAO = flight.get('DestinationAirport', {}).get('ICAO', "")
+            distance = flight.get('Distance', "")
+            if mission.get("Id") in missions_with_humanonly_true:
+                humanOnly = True
+            else:
+                humanOnly = flight.get('HumanOnly', False)
+            pay = mission.get('RealPay', "")
+            expirationDate = mission.get('ExpirationDate', "")
+            isLastMinute = mission.get('IsLastMinute', False)
+            descript = flight.get("Description", "")
+            descript = descript[:2] + descript[-1:] if descript and descript[-1:] == "n" else descript[:2]
+            paxClass = int(flight.get("MinPAXSeatConf", 0))
+            paxClasses = [None, None, None]
+            if 0 <= paxClass <= 2:
+                paxClasses[paxClass] = flight.get("PassengersNumber", "")
+            cargo = flight.get("Weight", 0)
+
+            row = [mission.get('Id', ""), fboId, departureAirport, departureICAO, destinationAirport, destinationICAO, distance, humanOnly, pay, expirationDate, isLastMinute, descript, *paxClasses, cargo]
+            results.append(row)
+    return results
+
+def queryFBOJobs_parallel():
+    fboIds_df = pd.read_csv('FBOs.csv')
+    fboIds = fboIds_df['ID'].tolist()
+
+    apiKey = "8e62f5f0-b026-4301-a8d8-122a2d34bd4e"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "oa-apikey": apiKey
+    }
+
+    all_results = []
+
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_fbo = {executor.submit(fetch_data_for_fbo, fboId, headers): fboId for fboId in fboIds}
+        for future in as_completed(future_to_fbo):
+            fboId, missions = future.result()
+            fbo_results = process_missions(fboId, missions)
+            all_results.extend(fbo_results)
+
+    # Convert to DataFrame
+    headers_list = ["Mission ID", "FBOId", "DepartureAirport", "DepartureICAO", "DestinationAirport", "DestinationICAO", "Distance", "HumanOnly", "Pay", "Expiration Date", "Is Last Minute", "Descript", "PaxClass0", "PaxClass1", "PaxClass2", "Cargo"]
+    results_df = pd.DataFrame(all_results, columns=headers_list)
+
+    # Processing DataFrame as in the original function
+    results_df["PaxClass0"] = pd.to_numeric(results_df["PaxClass0"], errors="coerce").fillna(0)
+    results_df["PaxClass1"] = pd.to_numeric(results_df["PaxClass1"], errors="coerce").fillna(0)
+    results_df["PaxClass2"] = pd.to_numeric(results_df["PaxClass2"], errors="coerce").fillna(0)
+    results_df["Cargo"] = pd.to_numeric(results_df["Cargo"], errors="coerce").fillna(0)
+    results_df.loc[results_df["Cargo"] > 0, "Cargo"] = results_df.loc[results_df["Cargo"] > 0, "Cargo"] * 0.45359237
+
+    # Assuming you want to sum duplicates based on these columns as "grouped_df" in the original function
+    grouped_df = results_df.groupby(["Mission ID", "FBOId", "DepartureAirport", "DepartureICAO", "DestinationAirport", "DestinationICAO", "Distance", "HumanOnly", "Pay", "Expiration Date", "Is Last Minute", "Descript"], as_index=False).sum()
+
+    grouped_df.to_csv('flights.csv', index=False)
+    print_with_timestamp("FBO Jobs Query Complete")
+
+
 
 def find_first_occurrence_of_word(word):
     # Take a screenshot
@@ -909,14 +1000,21 @@ def take_queries():
                         query_y_value = screenshot_fbo_job(job_row.iloc[1])
                         #print_with_timestamp('y value: ' + str(query_y_value))
                         if query_y_value < 1:
-                            #Click a different entry and retry
+                            #Click a different entry and retry - first line
                             pyautogui.click(x=646, y=469)
                             time.sleep(1)
                             query_y_value = screenshot_fbo_job(job_row.iloc[1])
-                            if query_y_value < 1: #Just going to retry the search, seems like the font in white throws the screengrab
-                                print_with_timestamp('Couldnt find job on screen, searched for: ' + str(job_row.iloc[1]))
-                                aaaaaa = input('Couldnt find job on screen, searched for: ' + str(job_row.iloc[1]))
-                                pyautogui.click(x=1000, y=10)
+                            if query_y_value < 1:
+                                #Click a different entry and retry - second line
+                                pyautogui.click(x=740, y=505)
+                                time.sleep(1)
+                                query_y_value = screenshot_fbo_job(job_row.iloc[1])
+                                if query_y_value < 1: #Just going to retry the search, seems like the font in white throws the screengrab
+                                    print_with_timestamp('Couldnt find job on screen, searched for: ' + str(job_row.iloc[1]))
+                                    aaaaaa = input('Couldnt find job on screen, searched for: ' + str(job_row.iloc[1]))
+                                    pyautogui.click(x=1000, y=10)
+                                
+                                
                         pyautogui.click(x=107, y=query_y_value)
                         #print_with_timestamp('Mouse would be clicking right now')
                         time.sleep(5)
@@ -1492,7 +1590,8 @@ if CompleteEverythingFile == 1: #We are just running the below if it's not for a
 
     if checkForQueries == 1:
         print_with_timestamp("Aircraft in need of jobs, beginning FBO Job Query")
-        queryFBOJobs()
+        #queryFBOJobs() #OLD VERSION
+        queryFBOJobs_parallel()
         print_with_timestamp("FBO Job Query Complete")
     else:
         print_with_timestamp("All aircraft in operation, searching for jobs not required")
