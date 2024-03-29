@@ -144,10 +144,15 @@ def filter_by_expiration(missions, hours):
     return missions[missions['Expiration Date'] >= future_time]
 
 def find_next_mission(missions, current_icao):
-    for index, mission in missions.iterrows():
-        if mission['DepartureICAO'] == current_icao:
-            
-            return mission
+    if route.empty:
+        for index, mission in missions.iterrows():
+            if mission['DepartureICAO'] == current_icao:
+                return mission
+    else:
+        for index, mission in missions.iterrows():
+            # Check if 'Mission ID' is not in 'route' when 'route' is not empty
+            if mission['DepartureICAO'] == current_icao and mission['Mission ID'] not in route['Mission ID'].values:
+                return mission
 
 def get_mission_distance(missions, mission_id):
     mission_flights = missions[missions['Mission ID'] == mission_id]
@@ -282,6 +287,8 @@ def remove_selected_missions(selected_mission_ids):
     missions.to_csv('flights.csv', index=False)
 
 def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_Hours, playerMixup, workOrderName):
+    print_with_timestamp("Beginning route planning for: " + workOrderName + " at " + starting_icao)
+    
     missions = pd.read_csv('flights.csv')
     fbos = pd.read_csv('FBOs.csv')
 
@@ -307,29 +314,27 @@ def plan_route(starting_icao, human_only, last_minute, hours, route_amount, max_
     hoursWorked = 0
     work_order = pd.DataFrame(columns=['Order', 'Mission ID', 'DepartureICAO', 'DestinationICAO', 'Distance', 'Descript', 'PaxClass0', 'PaxClass1', 'PaxClass2', 'Cargo'])
     dfs(missions, starting_icao, route_amount, max_Hours)
+    
+    if not route.empty:
+        jobs_take = pd.DataFrame()
+        jobs_take = route.copy()
+        jobs_take = jobs_take.groupby('Mission ID').first().reset_index()[['FBOId', 'Pay']]
+        total_pay = jobs_take['Pay'].sum()
+        jobs_take['Pay'] = jobs_take['Pay'].map('{:,.2f}'.format)
+        jobs_take['WorkOrderName'] = workOrderName
+        jobs_take = jobs_take.sort_values(by='FBOId', ascending=True)
+        jobs_take['WorkOrderName'] = workOrderName
 
-    #if len(route) > 0 and route.iloc[-1]['DestinationICAO'] != starting_icao:
-    #    print_with_timestamp('Warning: the final flight does not return to the starting ICAO.')
-    #elif len(route) < route_amount:
-    #    print_with_timestamp('Warning: less than ' + str(route_amount) + ' flights have been selected.')
-    #else:
-    #    print_with_timestamp('A route has been found.')
+        route.to_csv('output.csv', index=False)
+        #workOrderName = input('Please type the aircraft name: ').upper()
 
-    jobs_take = pd.DataFrame()
-    jobs_take = route.copy()
-    jobs_take = jobs_take.groupby('Mission ID').first().reset_index()[['FBOId', 'Pay']]
-    total_pay = jobs_take['Pay'].sum()
-    jobs_take['Pay'] = jobs_take['Pay'].map('{:,.2f}'.format)
-    jobs_take['WorkOrderName'] = workOrderName
-    jobs_take = jobs_take.sort_values(by='FBOId', ascending=True)
-    jobs_take['WorkOrderName'] = workOrderName
-
-    route.to_csv('output.csv', index=False)
-    #workOrderName = input('Please type the aircraft name: ').upper()
-
-    work_order.to_csv('workorder_' + workOrderName + '.csv', index=False)
-    jobs_take.to_csv('JobsToTake.csv', index=False, mode='a', header=not os.path.exists('JobsToTake.csv'))
-    return route, work_order, jobs_take, total_pay, work_order['Mission ID'].tolist()
+        work_order.to_csv('workorder_' + workOrderName + '.csv', index=False)
+        jobs_take.to_csv('JobsToTake.csv', index=False, mode='a', header=not os.path.exists('JobsToTake.csv'))
+        print_with_timestamp("Created route for " + workOrderName + ". Requested " + str(route_amount) + " flights, selected " + str(len(work_order)))
+    else:
+        print_with_timestamp("No flights available to create route for " + workOrderName)
+    
+    return work_order['Mission ID'].tolist()
 
 def automation_flights(starting_icao, aircraftType, preset, aircraftName, playerMixup):
 
@@ -400,8 +405,6 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName, player
         opCost = 69559
         max_range = 1784
 
-
-
     last_minute = 1 #disables last minute running
     playerMixup = playerMixup
 
@@ -444,7 +447,7 @@ def automation_flights(starting_icao, aircraftType, preset, aircraftName, player
         hours = 75
         max_Hours = 100
         
-    route, work_order, jobs_take, total_pay, selected_mission_ids = plan_route(starting_icao, 1, last_minute, hours, route_amount, max_Hours, playerMixup, aircraftName)
+    selected_mission_ids = plan_route(starting_icao, 1, last_minute, hours, route_amount, max_Hours, playerMixup, aircraftName)
 
     if selected_mission_ids:
         remove_selected_missions(selected_mission_ids)
@@ -1116,7 +1119,7 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
                 if ecoPaxLoaded == 1 and busPaxLoaded == 1 and firstPaxLoaded == 1 and cargoLoaded == 1:
                     break
 
-                if entireRetryVariable = 1: #This should be the rerun
+                if entireRetryVariable == 1: #This should be the rerun
                     print_with_timestamp(str(currentPayload[1]) + " | " + str(currentPayload[11]) + " | " + str(currentPayload[12]) + " | " + str(currentPayload[13]) + " | " + str(currentPayload[3]))
 
                 #currentPayload[1] != destination or len(currentPayload[11]) > 0 or currentPayload[12] != 'False' or len(currentPayload[13]) > 2:
@@ -1138,7 +1141,7 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
                         comparisonPasteVariable += 1
                     else:
                         if ecoPaxLoaded == 0 or busPaxLoaded == 0 or firstPaxLoaded == 0:
-                            if entireRetryVariable = 1: #She's just fucked
+                            if entireRetryVariable == 1: #She's just fucked
                                 break
                             
                             #redoing all the top instructions again
@@ -1223,7 +1226,10 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
                 # #Select don't load fuel
                 # pyautogui.click(x=600, y=554)
             
-            
+            if int(sys.argv[1]) == 1: #If playercreationfile
+                #Select no fuel operation
+                pyautogui.click(x=590, y=702)
+
             #Set whether crew sleep
             # Divide the flight distance by the speed and then add 36 minutes of mucking about
             hoursWorked += (distance / knots) + 0.6
@@ -1239,7 +1245,7 @@ def createWorkOrder(aircraft, workOrderName, listLocation):
             else:
                 next_hours = 14 #To force a crew rest before starting the new work order.
 
-            if hoursWorked + next_hours > 13 and rest_crew == 1:
+            if hoursWorked + next_hours > 13 and rest_crew == 1 and int(sys.argv[1]) == 0: #last check is if it's playercreationfile
                 hoursWorked = 0
                 pyautogui.click(x=702, y=313)
 
@@ -1504,7 +1510,7 @@ if CompleteEverythingFile == 1: #We are just running the below if it's not for a
             
             if hours_before_inspection >= 35:  # Aircraft doesn't need maintenance
                 automation_flights(aircraft_info['Airport'], aircraft_info['DisplayName'], preset, aircraft_info['Aircraft'], 0)
-                print_with_timestamp("Route created for " + aircraft_info['Aircraft'])
+                #print_with_timestamp("Route created for " + aircraft_info['Aircraft'])
             else:
                 print_with_timestamp(aircraft_info['Aircraft'] + " in maintenance")
 
@@ -1518,6 +1524,8 @@ file_name_jobs = 'JobsToTake.csv'
 
 time.sleep(1)
 
+#print_with_timestamp("Halted prior to take query") #TESTING
+#input() #TESTING
 
 if os.path.exists(file_name_jobs) and NoNewJobsFile == 0:
     print_with_timestamp("Beginning query search")
